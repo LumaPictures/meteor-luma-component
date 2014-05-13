@@ -1,0 +1,8 @@
+{
+  "packages": {
+    "luma-component": {
+      "path": ".."
+    },
+    "luma-ui": {}
+  }
+}
