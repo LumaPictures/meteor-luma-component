@@ -123,36 +123,61 @@ Tinytest.add "Luma Component - Mixins", ( test ) ->
 if Meteor.isClient
   Tinytest.add "Luma Component - Extend Template", ( test ) ->
     data =
-      id: "unique-selector"
+      id: "extend-template"
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
+      debug: "all"
 
     ORM =
-      currentUser: ( key ) -> Session.get key or false
+      currentUser: -> Session.get "user" or false
       extended: ->
         @include
-          save: -> Session.set @name(), @email()
-          destroy: -> Session.set @name(), undefined
+          initialize: ->
+            Session.set "created", true
+            Session.set "user", @name()
+          save: -> Session.set "rendered", true
+          unset: -> Session.set "destroyed", true
 
     class Model extends Component
       @extend ORM
+      constructor: ->
+        super
+        @initialize()
+
+      rendered: ->
+        @save()
+        super
+      destroyed: ->
+        @unset()
+        super
+
+    Session.setDefault "created", undefined
+    Session.setDefault "rendered", undefined
+    Session.setDefault "destroyed", undefined
 
     Template.componentFixture.created = -> new Model @
-    Template.componentFixture.rendered = -> @save()
-    Template.componentFixture.destroyed = -> @destroy()
+    Template.componentFixture.rendered = -> @rendered()
+    Template.componentFixture.destroyed = -> @destroyed()
 
     component = UI.renderWithData Template.componentFixture, data
     tI = component.templateInstance
 
+    test.equal Session.get( "created" ), true, "Template created callback can instantiate a Component and call its methods."
+    test.equal Model.currentUser(), "Austin Rivas", "Attribute accessors available in component constructor."
     test.equal tI.name(), "Austin Rivas", "Attribute accessors should still function when mixins are present."
     test.equal tI.email(), "austinrivas@gmail.com", "Attribute accessors should still function when mixins are present."
 
     $DOM = $( '<div id="parentNode"></div>' )
     UI.insert component, $DOM
 
-    test.equal Model.currentUser( "Austin Rivas" ), "austinrivas@gmail.com" , "Calling instance method in rendered callback preserves context."
+    test.equal Session.get( "rendered" ), true, "Template rendered callback can call component methods."
 
-    $( "#unique-selector", $DOM ).remove()
+    $( "##{ data.id }", $DOM ).remove()
 
-    test.equal Model.currentUser( "Austin Rivas"), undefined, "Calling instance method in destroyed callback should preserve context."
+    test.equal Session.get( "destroyed" ), true, "Template destroyed callback can call component methods."
+
+    Session.set "created", undefined
+    Session.set "rendered", undefined
+    Session.set "destroyed", undefined
+

@@ -28,8 +28,6 @@ Package.on_use(function (api, where) {
   ], [ 'client', 'server']);
 
   api.add_files([
-    'lib/mixins/initialize.mixin.coffee',
-    'lib/mixins/destroy.mixin.coffee',
     'lib/mixins/options.mixin.coffee',
     'lib/mixins/selector.mixin.coffee',
     'lib/mixins/utility.mixin.coffee'

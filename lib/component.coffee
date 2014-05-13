@@ -13,9 +13,30 @@ class Component
       @addGetterSetter( 'data', attr ) for attr of @data
 
     if Meteor.isClient
-      return _.extend context, @
+      component = _.extend context, @
     if Meteor.isServer
-      return @
+      component = @
+
+    @log "created", component
+    return component
+
+  # ##### rendered()
+  rendered: -> @log "rendered", @
+
+  # ##### destroyed()
+  destroyed: -> @log "destroyed", @
+
+  # ##### isDebug()
+  isDebug: ->
+    if @debug
+      return @debug()
+    else return false
+
+  # ##### log()
+  log: ( message, object ) ->
+    if @isDebug()
+      if @isDebug() is "all" or message.indexOf( @isDebug() ) isnt -1
+        console.log "component:#{ @id() }:#{ message } ->", object
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object
