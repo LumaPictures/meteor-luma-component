@@ -13,12 +13,17 @@ class Component
 
     @data = {} unless @data
 
+    if @data and @defaults then @data.defaults = @defaults
+
     if Meteor.isClient and context.__component__
       uniqueId = context.__component__.guid
       if @data.id then @data.selector = @data.id else @data.selector = "#{ @constructor.name }-#{ uniqueId }"
 
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data
+
+    if @options and @defaults
+      @options _.defaults @options(), @defaults()
 
     if Meteor.isClient
       component = _.extend context, @

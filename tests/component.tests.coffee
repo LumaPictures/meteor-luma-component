@@ -58,7 +58,7 @@ Tinytest.add "Luma Component - Attribute Accessor", ( test ) ->
   sportsCar.options {}
   test.equal sportsCar.options(), {}, "Setting an accessor should set the property."
 
-Tinytest.add "Luma Component - Mixins", ( test ) ->
+Tinytest.add "Luma Component - Mixin Support", ( test ) ->
   classProperties =
     find: ( id ) -> return id
     create: ( attrs ) -> return attrs
@@ -201,4 +201,31 @@ if Meteor.isClient
     tI2 = componentWithoutId.templateInstance
 
     test.equal tI2.selector(), "Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to <ClassName>-<guid>"
+
+Tinytest.add "Luma Component - Default Options", ( test ) ->
+  data =
+    name: "Austin Rivas"
+    email: "austinrivas@gmail.com"
+    options:
+      awesome: true
+      lame: false
+
+  defaults =
+    cool: "very"
+    lame: true
+
+  class Widget extends Component
+    defaults: defaults
+
+  if Meteor.isClient
+    Template.componentFixture.created = -> new Widget @
+
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    options = _.clone data.options
+    mergedOptions = _.defaults options, defaults
+
+    test.equal tI.options(), mergedOptions, "If and id is provided it is set as the selector."
+
 

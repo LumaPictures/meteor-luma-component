@@ -23,21 +23,18 @@ Package.on_use(function (api, where) {
   ], [ 'client', 'server' ]);
 
   api.add_files([
-    'lib/mixins/base.mixin.coffee',
-    'lib/mixins/debug.mixin.coffee'
+    'lib/mixins/base.mixin.coffee'
   ], [ 'client', 'server']);
 
   api.add_files([
-    'lib/mixins/options.mixin.coffee',
-    'lib/mixins/selector.mixin.coffee',
-    'lib/mixins/utility.mixin.coffee'
-    /* ADD ComponentComponent Mixins here */
+    'lib/mixins/options.mixin.coffee'
+    /* ADD Component Mixins here */
   ], [ 'client' ]);
 
   api.add_files([
     'lib/component.coffee'
   ], [ 'client', 'server']);
-  /* END ComponentComponent */
+  /* END Component */
 });
 
 Package.on_test(function (api) {
