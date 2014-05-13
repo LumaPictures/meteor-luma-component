@@ -1,6 +1,9 @@
 # Component Base Class
 class Component
-  # ##### constructor()
+
+  # ## Template Instance
+
+  # ##### constructor( Object or Null )
   constructor: ( context = {} ) ->
     if Meteor.isClient
       if "data" of context
@@ -8,9 +11,14 @@ class Component
     if Meteor.isServer
       @data = context
 
+    @data = {} unless @data
+
+    if Meteor.isClient and context.__component__
+      uniqueId = context.__component__.guid
+      if @data.id then @data.selector = @data.id else @data.selector = "#{ @constructor.name }-#{ uniqueId }"
+
     # Add getter setter methods for everything in the component data context.
-    if @data
-      @addGetterSetter( 'data', attr ) for attr of @data
+    @addGetterSetter( 'data', attr ) for attr of @data if @data
 
     if Meteor.isClient
       component = _.extend context, @
@@ -18,7 +26,6 @@ class Component
       component = @
 
     @log "created", component
-    return component
 
   # ##### rendered()
   rendered: -> @log "rendered", @
@@ -26,17 +33,33 @@ class Component
   # ##### destroyed()
   destroyed: -> @log "destroyed", @
 
+  # ## Logging
+
+  # A handy option for granular debug logs.
+  # Set debug to any string to only log messages that contain that string.
+  #   + `all` logs all messages
+  # ##### client examples
+  #   + `created` logs the initial component state
+  #   + `rendered` logs the instantiated component on render
+  #   + `destroyed` logs when the component is detroyed
+  #   + `options` logs the options for that instantiated component
+  # ##### server examples
+  #   + `"query"` : will log the base and filtered queries for every subscription.
+  #   + `"added"` : will log all documents added to subscriptions.
+  #   + `"changed"` : will log all documents changed for a subscription.
+  #   + `"removed"` : will log all documents removed from a collection.
+
   # ##### isDebug()
   isDebug: ->
     if @debug
       return @debug()
     else return false
 
-  # ##### log()
+  # ##### log( String, Object )
   log: ( message, object ) ->
     if @isDebug()
       if @isDebug() is "all" or message.indexOf( @isDebug() ) isnt -1
-        console.log "component:#{ @id() }:#{ message } ->", object
+        console.log "component:#{ @selector() }:#{ message } ->", object
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object
@@ -77,7 +100,7 @@ class Component
   # Component provides mixin support through two static functions, @extend() and @include()
   # which we can use for extending the class with static and instance properties respectively.
 
-  # ##### Component.extend( Object )
+  # ##### extend( Object )
   # Extend can be used to extend a class with static methods directly or extend an entire mixin object  with instance methods.
   # An example mixin object looks like :
   ###
@@ -98,7 +121,7 @@ class Component
     obj.extended?.apply @
     return @
 
-  # ##### Component.include( Object )
+  # ##### include( Object )
   @include: ( obj ) ->
     for key, value of obj when key not in Component.keywords
       # Assign properties to the prototype
@@ -107,5 +130,6 @@ class Component
     obj.included?.apply @
     return @
 
+  # ##### @keywords [ Array ]
   # The little dance around the keywords property is to ensure we have callback support when mixins extend a class.
   @keywords: [ 'extended', 'included' ]

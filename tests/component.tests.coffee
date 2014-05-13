@@ -127,7 +127,6 @@ if Meteor.isClient
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
-      debug: "all"
 
     ORM =
       currentUser: -> Session.get "user" or false
@@ -180,4 +179,26 @@ if Meteor.isClient
     Session.set "created", undefined
     Session.set "rendered", undefined
     Session.set "destroyed", undefined
+
+if Meteor.isClient
+  Tinytest.add "Luma Component - Dynamic Selector", ( test ) ->
+    data =
+      id: "widget-selector"
+      class: "example"
+      name: "Austin Rivas"
+      email: "austinrivas@gmail.com"
+
+    class Widget extends Component
+
+    Template.componentFixture.created = -> new Widget @
+
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    test.equal tI.selector(), data.id, "If and id is provided it is set as the selector."
+
+    componentWithoutId = UI.renderWithData Template.componentFixture, _.omit data, "id"
+    tI2 = componentWithoutId.templateInstance
+
+    test.equal tI2.selector(), "Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to <ClassName>-<guid>"
 
