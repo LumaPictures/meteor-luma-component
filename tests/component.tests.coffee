@@ -45,3 +45,43 @@ Tinytest.add "Luma Component - Chained Attribute Accessor", ( test ) ->
 
   sportsCar.options {}
   test.equal sportsCar.options(), {}, "Setting an accessor should set the property."
+
+Tinytest.add "Luma Component - Mixins", ( test ) ->
+  classProperties =
+    find: ( id ) -> return id
+    create: ( attrs ) -> return attrs
+
+  instanceProperties =
+    save: ( id ) -> return id
+    destroy: ( id ) -> return true
+
+  class User extends Component
+    @extend classProperties
+    @include instanceProperties
+
+  attrs =
+    name: "Austin Rivas"
+    email: "austinrivas@gmail.com"
+
+  user = new User()
+  test.equal User.find( 1 ), 1, "Class methods mixed into a class should be present on the class."
+  test.equal User.create( attrs ), attrs, "Class methods mixed into a class should be present on the class."
+  test.equal user.save( 1 ), 1, "Instance methods mixed into a class should be present on instances of that class."
+  test.equal user.destroy( 2 ), true, "Instance methods mixed into a class should be present on instances of that class."
+
+  ORM =
+    find: ( id ) -> return id
+    create: ( attrs ) -> return attrs
+    extended: ->
+      @include
+        save: ( id ) -> return id
+        destroy: ( id ) -> return true
+
+  class Model extends Component
+    @extend ORM
+
+  model = new Model()
+  test.equal Model.find( 1 ), 1, "Class methods mixed into a class should be present on the class."
+  test.equal Model.create( attrs ), attrs, "Class methods mixed into a class should be present on the class."
+  test.equal model.save( 1 ), 1, "Instance methods mixed into a class should be present on instances of that class."
+  test.equal model.destroy( 2 ), true, "Instance methods mixed into a class should be present on instances of that class."
