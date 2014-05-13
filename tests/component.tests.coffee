@@ -123,24 +123,24 @@ Tinytest.add "Luma Component - Mixins", ( test ) ->
 if Meteor.isClient
   Tinytest.add "Luma Component - Extend Template", ( test ) ->
     data =
-      id: 1234
+      id: "unique-selector"
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
 
     ORM =
-      find: ( name ) -> return Session.get name or false
+      currentUser: ( key ) -> Session.get key or false
       extended: ->
         @include
-          save: -> Session.set @name, @email
-          destroy: -> Session.set @name, undefined
+          save: -> Session.set @name(), @email()
+          destroy: -> Session.set @name(), undefined
 
     class Model extends Component
       @extend ORM
 
     Template.componentFixture.created = -> new Model @
     Template.componentFixture.rendered = -> @save()
-    Template.componentFixture.destroyed = -> @destroyed()
+    Template.componentFixture.destroyed = -> @destroy()
 
     component = UI.renderWithData Template.componentFixture, data
     tI = component.templateInstance
@@ -148,6 +148,11 @@ if Meteor.isClient
     test.equal tI.name(), "Austin Rivas", "Attribute accessors should still function when mixins are present."
     test.equal tI.email(), "austinrivas@gmail.com", "Attribute accessors should still function when mixins are present."
 
-    UI.insert component, $( '<div></div>' )
+    $DOM = $( '<div id="parentNode"></div>' )
+    UI.insert component, $DOM
 
-    test.equal Session.get( "Austin Rivas" ), tI.find( "Austin Rivas" ), "Component methods are first class methods of the template instance."
+    test.equal Model.currentUser( "Austin Rivas" ), "austinrivas@gmail.com" , "Calling instance method in rendered callback preserves context."
+
+    $( "#unique-selector", $DOM ).remove()
+
+    test.equal Model.currentUser( "Austin Rivas"), undefined, "Calling instance method in destroyed callback should preserve context."
