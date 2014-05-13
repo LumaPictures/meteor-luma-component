@@ -14,3 +14,6 @@ showdown
 luma-ui
 iron-router
 luma-component
+blaze-layout
+iron-router-progress
+jquery-ui

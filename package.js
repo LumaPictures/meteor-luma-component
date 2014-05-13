@@ -52,6 +52,6 @@ Package.on_test(function (api) {
   ], ['client', 'server']);
 
   api.add_files([
-    'tests/component.test.coffee'
+    'tests/component.tests.coffee'
   ], ['client', 'server']);
 });
