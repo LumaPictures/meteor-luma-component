@@ -21,6 +21,12 @@ Tinytest.add "Luma Component - Chained Attribute Accessor", ( test ) ->
   test.equal sportsCar.doors(), data.doors, "Attribute accessor should return property value."
   test.equal sportsCar.color(), data.color, "Attribute accessor should return property value."
   test.equal sportsCar.options(), data.options, "Attribute accessor should return property value."
+  test.equal sportsCar.options().performance, data.options.performance, "Attribute accessor should return property value."
+  test.equal sportsCar.options().performance.tires, data.options.performance.tires, "Attribute accessor should return property value."
+  test.equal sportsCar.options().performance.tires.manufacturer, data.options.performance.tires.manufacturer, "Attribute accessor should return property value."
+  test.equal sportsCar.options().performance.tires.name, data.options.performance.tires.name, "Attribute accessor should return property value."
+  test.equal sportsCar.options().convertible, data.options.convertible, "Attribute accessor should return property value."
+  test.equal sportsCar.options().convertible.hardTop, data.options.convertible.hardTop, "Attribute accessor should return property value."
 
   try
     sportsCar.doesntExist()
