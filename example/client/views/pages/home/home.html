@@ -1,3 +1,14 @@
 <template name="home">
-  {{> example }}
+  {{#panel}}
+    {{> panelHeading title="Example Component" }}
+    {{#panelBody}}
+      {{> example }}
+      <div class="row">
+        {{> circle }}
+      </div>
+      <div class="row">
+        {{> rectangle }}
+      </div>
+    {{/panelBody}}
+  {{/panel}}
 </template>
