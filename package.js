@@ -8,7 +8,6 @@ Package.on_use(function (api, where) {
     'underscore'
   ],[ 'client', 'server' ]);
 
-  // for helpers
   api.use([
     'jquery',
     'ui',
@@ -46,10 +45,22 @@ Package.on_use(function (api, where) {
 Package.on_test(function (api) {
   api.use([
     'coffeescript',
+    'underscore',
     'luma-component',
     'tinytest',
     'test-helpers'
   ], ['client', 'server']);
+
+  api.use([
+    'jquery',
+    'ui',
+    'templating',
+    'spacebars'
+  ], [ 'client' ]);
+
+  api.add_files([
+    'tests/fixtures.html'
+  ], [ 'client' ]);
 
   api.add_files([
     'tests/component.tests.coffee'

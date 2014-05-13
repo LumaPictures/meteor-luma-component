@@ -1,7 +1,6 @@
 Tinytest.add "Luma Component - Attribute Accessor", ( test ) ->
 
   class Car extends Component
-    constructor: ( @data ) -> super
 
   data =
     doors: 2
@@ -14,7 +13,13 @@ Tinytest.add "Luma Component - Attribute Accessor", ( test ) ->
       convertible:
         hardTop: true
 
-  sportsCar = new Car data
+  if Meteor.isClient
+    context =
+      data: data
+  if Meteor.isServer
+    context = data
+
+  sportsCar = new Car context
 
   test.equal sportsCar.data, data, "Properties should be identical after instantiation."
   test.equal sportsCar.doors(), data.doors, "Attribute accessor should return property value."
@@ -35,6 +40,14 @@ Tinytest.add "Luma Component - Attribute Accessor", ( test ) ->
     if Meteor.isClient
       message = "undefined is not a function"
     test.equal error.message, message, "Calling an undefined accessor should result in an error."
+
+  if sportsCar.color
+    test.equal true, true, "Accessor methods should serve dual purpose as conditionals."
+  else test.equal true, false, "Accessor methods should serve dual purpose as conditionals."
+
+  unless sportsCar.doesntExist
+    test.equal true, true, "Accessor methods should serve dual purpose as conditionals."
+  else test.equal true, false, "Accessor methods should serve dual purpose as conditionals."
 
   sportsCar.color "black"
   sportsCar.doors 4
@@ -78,7 +91,6 @@ Tinytest.add "Luma Component - Mixins", ( test ) ->
 
   class Model extends Component
     @extend ORM
-    constructor: ( @data ) -> super
 
   model = new Model()
   test.equal Model.find( 1 ), 1, "Class methods mixed into a class should be present on the class."
@@ -92,7 +104,13 @@ Tinytest.add "Luma Component - Mixins", ( test ) ->
     tags: [
       key: "value"
     ]
-  user = new Model data
+
+  if Meteor.isClient
+    context =
+      data: data
+  if Meteor.isServer
+    context = data
+  user = new Model context
 
   test.equal user.name(), "Austin Rivas", "Attribute accessors should still function when mixins are present."
   test.equal user.email(), "austinrivas@gmail.com", "Attribute accessors should still function when mixins are present."
@@ -101,3 +119,35 @@ Tinytest.add "Luma Component - Mixins", ( test ) ->
   test.equal user.destroy( 2 ), true, "Instance methods should still function when attribute accessors are created."
   test.equal Model.find( 1 ), 1, "Class methods should still function when attribute accessors are created."
   test.equal Model.create( attrs ), attrs, "Class methods should still function when attribute accessors are created."
+
+if Meteor.isClient
+  Tinytest.add "Luma Component - Extend Template", ( test ) ->
+    data =
+      id: 1234
+      class: "example"
+      name: "Austin Rivas"
+      email: "austinrivas@gmail.com"
+
+    ORM =
+      find: ( name ) -> return Session.get name or false
+      extended: ->
+        @include
+          save: -> Session.set @name, @email
+          destroy: -> Session.set @name, undefined
+
+    class Model extends Component
+      @extend ORM
+
+    Template.componentFixture.created = -> new Model @
+    Template.componentFixture.rendered = -> @save()
+    Template.componentFixture.destroyed = -> @destroyed()
+
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    test.equal tI.name(), "Austin Rivas", "Attribute accessors should still function when mixins are present."
+    test.equal tI.email(), "austinrivas@gmail.com", "Attribute accessors should still function when mixins are present."
+
+    UI.insert component, $( '<div></div>' )
+
+    test.equal Session.get( "Austin Rivas" ), tI.find( "Austin Rivas" ), "Component methods are first class methods of the template instance."
