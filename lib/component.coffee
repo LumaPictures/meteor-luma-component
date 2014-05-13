@@ -21,6 +21,7 @@ class Component
       ```
     ###
     @addGetterSetter( 'data', attr ) for attr of @data
+    return @
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object
