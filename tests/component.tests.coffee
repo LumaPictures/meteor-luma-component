@@ -222,15 +222,13 @@ Tinytest.add "Luma Component - Default Options", ( test ) ->
 
   if Meteor.isServer
     widget = new Widget data
+
     test.equal widget.options(), mergedOptions, "If and id is provided it is set as the selector."
 
   if Meteor.isClient
     Template.componentFixture.created = -> new Widget @
-
     component = UI.renderWithData Template.componentFixture, data
     tI = component.templateInstance
-
-
 
     test.equal tI.options(), mergedOptions, "If and id is provided it is set as the selector."
 

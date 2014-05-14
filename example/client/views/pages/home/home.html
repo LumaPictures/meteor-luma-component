@@ -2,12 +2,21 @@
   {{#panel}}
     {{> panelHeading title="Example Component" }}
     {{#panelBody}}
-      {{> example }}
       <div class="row">
-        {{> circle }}
+        {{> example
+            width="100%"
+            viewbox="0 0 1200 400"
+            desc="Example rect01 - rectangle with sharp corners"
+            template="rect"
+            debug="all" }}
       </div>
       <div class="row">
-        {{> rectangle }}
+        {{> example
+            width="100%"
+            viewbox="0 0 1200 400"
+            desc="Example rect01 - rectangle with sharp corners"
+            template="rect"
+            debug="all" }}
       </div>
     {{/panelBody}}
   {{/panel}}
