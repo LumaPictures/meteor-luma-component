@@ -17,7 +17,7 @@ class Component
     if @data and @defaults then @data.defaults = @defaults
 
     if Meteor.isClient and templateInstance.__component__
-      uniqueId = context.__component__.guid
+      uniqueId = templateInstance.__component__.guid
       if @data.id then @data.selector = @data.id else @data.selector = "#{ @constructor.name }-#{ uniqueId }"
 
     # Add getter setter methods for everything in the component data context.
@@ -26,13 +26,14 @@ class Component
     if @options and @defaults
       @options _.defaults @options(), @defaults()
 
-    if Meteor.isClient
-      component = _.extend templateInstance, @
-      component.data.self = component
+    if Meteor.isClient and templateInstance.__component__
+        templateInstance.__component__.events = @events
+        templateInstance = _.extend templateInstance, @
+        templateInstance.data.self = templateInstance
     if Meteor.isServer
-      component = @
+      templateInstance = @
 
-    @log "created", component
+    @log "created", templateInstance
 
   # ##### rendered()
   rendered: -> @log "rendered", @
@@ -90,7 +91,7 @@ class Component
     ```
   ###
   addGetterSetter: ( propertyAttr, attr ) ->
-    # extend this with a function accessible by calling @.<attr>()
+    # extend this with a function accessible by calling @<attr>()
     @[ attr ] = (args...) ->
       # if the accessor is called without and arguments
       if args.length == 0
