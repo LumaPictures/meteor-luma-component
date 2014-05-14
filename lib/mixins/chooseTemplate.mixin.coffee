@@ -40,8 +40,10 @@ ComponentMixins.ChooseTemplate =
         template ?= @defaultTemplate()
         # If the template is defined return it
         if Template[ template ]
-          return Template[ template ]
+          template = Template[ template ]
           # Otherwise return the default template
         else if Template[ @defaultTemplate() ]
-          return Template[ @defaultTemplate() ]
+          template = Template[ @defaultTemplate() ]
         else throw new Error "#{ @defaultTemplate() } is not defined."
+        @log "chooseTemplate", template
+        return template

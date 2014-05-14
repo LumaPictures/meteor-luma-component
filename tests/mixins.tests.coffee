@@ -3,6 +3,7 @@ if Meteor.isClient
 
     class Widget extends Component
       @extend ComponentMixins.ChooseTemplate
+
     Template.componentFixture.created = -> new Widget @
     component = UI.render Template.componentFixture
     tI = component.templateInstance

@@ -6,8 +6,9 @@ class Component
   # ##### constructor( Object or Null )
   constructor: ( context = {} ) ->
     if Meteor.isClient
-      if "data" of context
-        @data = context.data
+      templateInstance = context
+      if "data" of templateInstance
+        @data = templateInstance.data
     if Meteor.isServer
       @data = context
 
@@ -15,7 +16,7 @@ class Component
 
     if @data and @defaults then @data.defaults = @defaults
 
-    if Meteor.isClient and context.__component__
+    if Meteor.isClient and templateInstance.__component__
       uniqueId = context.__component__.guid
       if @data.id then @data.selector = @data.id else @data.selector = "#{ @constructor.name }-#{ uniqueId }"
 
@@ -26,7 +27,7 @@ class Component
       @options _.defaults @options(), @defaults()
 
     if Meteor.isClient
-      component = _.extend context, @
+      component = _.extend templateInstance, @
     if Meteor.isServer
       component = @
 
@@ -64,7 +65,7 @@ class Component
   log: ( message, object ) ->
     if @isDebug()
       if @isDebug() is "all" or message.indexOf( @isDebug() ) isnt -1
-        console.log "component:#{ @selector() }:#{ message } ->", object
+        console.log "#{ @constructor.name }:#{ @selector() }:#{ message } ->", object
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object

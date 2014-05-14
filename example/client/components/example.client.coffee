@@ -15,4 +15,4 @@ Template.example.destroyed = -> @destroyed()
 Template.example.events = {}
 
 # ##### helpers()
-Template.example.helpers = {}
+Template.example.helpers = Template.example
