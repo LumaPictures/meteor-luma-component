@@ -8,28 +8,11 @@ Package.on_use(function (api, where) {
     'underscore'
   ],[ 'client', 'server' ]);
 
-  api.use([
-    'jquery',
-    'ui',
-    'templating',
-    'spacebars'
-  ], [ 'client' ]);
-
   /* Component */
   api.export([
-    'ComponentMixins',
     'Component'
     /* ADD Component Exports here */
   ], [ 'client', 'server' ]);
-
-  api.add_files([
-    'lib/mixins/base.mixin.coffee'
-  ], [ 'client', 'server']);
-
-  api.add_files([
-    'lib/mixins/options.mixin.coffee'
-    /* ADD Component Mixins here */
-  ], [ 'client' ]);
 
   api.add_files([
     'lib/component.coffee'
