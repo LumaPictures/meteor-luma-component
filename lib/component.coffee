@@ -28,6 +28,7 @@ class Component
 
     if Meteor.isClient
       component = _.extend templateInstance, @
+      component.data.self = component
     if Meteor.isServer
       component = @
 

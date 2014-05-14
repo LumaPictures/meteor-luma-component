@@ -3,22 +3,26 @@
     {{> panelHeading title="Example Component" }}
     {{#panelBody}}
       <div class="row">
-        {{> example
-            id="rectangle"
-            width="100%"
-            viewbox="0 0 1200 400"
-            desc="Example rect01 - rectangle with sharp corners"
-            template="rectangle"
-            debug="all" }}
-      </div>
-      <div class="row">
-        {{> example
-            id="circle"
-            width="100%"
-            viewbox="0 0 1200 400"
-            desc="Example circle01 - circle filled with red and stroked with blue"
-            template="circle"
-            debug="all" }}
+        <div class="col-sm-6">
+          {{> example
+              id="rectangle"
+              width="100%"
+              height="200px"
+              viewbox="0 0 1200 400"
+              desc="Example rect01 - rectangle with sharp corners"
+              template="rectangle"
+              debug="all" }}
+        </div>
+        <div class="col-sm-6">
+          {{> example
+              id="circle"
+              width="100%"
+              height="200px"
+              viewbox="0 0 1200 400"
+              desc="Example circle01 - circle filled with red and stroked with blue"
+              template="circle"
+              debug="all" }}
+        </div>
       </div>
     {{/panelBody}}
   {{/panel}}

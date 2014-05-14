@@ -11,8 +11,8 @@ Template.example.rendered = -> @rendered()
 # ##### destroyed()
 Template.example.destroyed = -> @destroyed()
 
-# ##### events()
+# ##### events [ Object ]
 Template.example.events = {}
 
 # ##### helpers()
-Template.example.helpers = Template.example
+Template.example.helpers {}

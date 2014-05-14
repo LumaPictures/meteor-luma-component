@@ -13,7 +13,7 @@
           {{#if UI.contentBlock }}
               {{> UI.contentBlock }}
           {{else}}
-              {{#with chooseTemplate template }}
+              {{#with self.chooseTemplate template }}
                   {{#with .. }}     {{! original arguments to DataTable }}
                       {{> .. }}     {{! return value from chooseTemplate( template ) }}
                   {{/with}}
