@@ -10,9 +10,18 @@ Package.on_use(function (api, where) {
 
   /* Component */
   api.export([
+    'ComponentMixins',
     'Component'
     /* ADD Component Exports here */
   ], [ 'client', 'server' ]);
+
+  api.add_files([
+    'lib/mixins/base.mixin.coffee'
+  ], [ 'client', 'server' ]);
+
+  api.add_files([
+    'lib/mixins/chooseTemplate.mixin.coffee'
+  ], [ 'client' ]);
 
   api.add_files([
     'lib/component.coffee'
@@ -41,6 +50,7 @@ Package.on_test(function (api) {
   ], [ 'client' ]);
 
   api.add_files([
-    'tests/component.tests.coffee'
+    'tests/component.tests.coffee',
+    'tests/mixins.tests.coffee'
   ], ['client', 'server']);
 });
