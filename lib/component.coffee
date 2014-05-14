@@ -27,7 +27,9 @@ class Component
       @options _.defaults @options(), @defaults()
 
     if Meteor.isClient and templateInstance.__component__
-        templateInstance.__component__.events = @events
+        if templateInstance.__component__.events
+          _.extend templateInstance.__component__.events, @events
+        else templateInstance.__component__.events = @events
         templateInstance = _.extend templateInstance, @
         templateInstance.data.self = templateInstance
     if Meteor.isServer

@@ -232,4 +232,86 @@ Tinytest.add "Luma Component - Default Options", ( test ) ->
 
     test.equal tI.options(), mergedOptions, "If and id is provided it is set as the selector."
 
+if Meteor.isClient
+  Tinytest.add "Luma Component - DOM Events", ( test ) ->
+
+    Session.set "instance-event", false
+    Session.set "mixin-event", false
+
+    data =
+      id: "dom-events"
+      class: "example"
+      name: "Austin Rivas"
+      email: "austinrivas@gmail.com"
+
+    Mixin =
+      extended: ->
+        @include
+          events:
+            "click": ( event, target ) -> Session.set "mixin-event", true
+
+    class Widget extends Component
+      events:
+        "click": ( event, target ) -> Session.set "instance-event", true
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.click()
+
+    test.equal Session.get( "instance-event" ), true, "Event maps defined as an instance property should fire normally."
+    Session.set "instance-event", false
+
+    class Widget extends Component
+      @extend Mixin
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.click()
+
+    test.equal Session.get( "mixin-event" ), true, "Event maps defined as an instance property on a mixin should fire normally."
+
+    Session.set "instance-event", false
+    Session.set "mixin-event", false
+
+    class Widget extends Component
+      @extend Mixin
+      events:
+        "click": ( event, target ) -> Session.set "instance-event", true
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.click()
+
+    test.equal Session.get( "instance-event" ), true, "When events conflict, the event defined last takes precedence."
+    test.equal Session.get( "mixin-event" ), false, "When events conflict, the event defined last takes precedence."
+
+    Session.set "instance-event", false
+    Session.set "mixin-event", false
+
+    class Widget extends Component
+      events:
+        "click": ( event, target ) -> Session.set "instance-event", true
+      @extend Mixin
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.click()
+
+    test.equal Session.get( "instance-event" ), false, "When events conflict, the event defined last takes precedence."
+    test.equal Session.get( "mixin-event" ), true, "When events conflict, the event defined last takes precedence."
+
+    Session.set "instance-event", undefined
+    Session.set "mixin-event", undefined
+
+
+
+
 
