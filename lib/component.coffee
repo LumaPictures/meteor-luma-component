@@ -16,6 +16,8 @@ class Component
 
     if @data and @defaults then @data.defaults = @defaults
 
+    unless @data.options then @data.options = {}
+
     if Meteor.isClient and templateInstance.__component__
       uniqueId = templateInstance.__component__.guid
       if @data.id then @data.selector = @data.id else @data.selector = "#{ @constructor.name }-#{ uniqueId }"
