@@ -1,4 +1,4 @@
-Tinytest.add "Luma Component - Attribute Accessor", ( test ) ->
+Tinytest.add "Luma Component - Getter Setters", ( test ) ->
 
   class Car extends Component
 
@@ -195,12 +195,12 @@ if Meteor.isClient
     component = UI.renderWithData Template.componentFixture, data
     tI = component.templateInstance
 
-    test.equal tI.selector(), data.id, "If and id is provided it is set as the selector."
+    test.equal tI.selector(), "##{ data.id }", "If and id is provided it is set as the selector."
 
     componentWithoutId = UI.renderWithData Template.componentFixture, _.omit data, "id"
     tI2 = componentWithoutId.templateInstance
 
-    test.equal tI2.selector(), "Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to <ClassName>-<guid>"
+    test.equal tI2.selector(), "#Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to <ClassName>-<guid>"
 
 Tinytest.add "Luma Component - Default Options", ( test ) ->
   data =
