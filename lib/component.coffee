@@ -19,10 +19,12 @@ class Component
     unless @data.options then @data.options = {}
 
     if Meteor.isClient and templateInstance.__component__
+      templateInstance.__component__.events = {}
       unless @data.id
         @data.id = templateInstance.__component__.guid
         @data.selector = "##{ @constructor.name }-#{ @data.id }"
-      @data.selector = "##{ @data.id }"
+      else
+        @data.selector = "##{ @data.id }"
 
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data

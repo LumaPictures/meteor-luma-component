@@ -187,6 +187,7 @@ if Meteor.isClient
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
+      debug: "all"
 
     class Widget extends Component
 
