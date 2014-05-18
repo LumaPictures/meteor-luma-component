@@ -187,7 +187,6 @@ if Meteor.isClient
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
-      debug: "all"
 
     class Widget extends Component
 
@@ -244,12 +243,19 @@ if Meteor.isClient
       class: "example"
       name: "Austin Rivas"
       email: "austinrivas@gmail.com"
+      debug: "all"
 
     Mixin =
       extended: ->
         @include
           events:
             "click": ( event, target ) -> Session.set "mixin-event", true
+
+    OtherMixin =
+      extended: ->
+        @include
+          events:
+            "clack": ( event, target ) -> Session.set "otherMixin-event", true
 
     class Widget extends Component
       events:
@@ -311,6 +317,44 @@ if Meteor.isClient
 
     Session.set "instance-event", undefined
     Session.set "mixin-event", undefined
+
+    Session.set "mixin-event", false
+    Session.set "otherMixin-event", false
+
+    class Widget extends Component
+      @extend Mixin
+      @extend OtherMixin
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.click()
+    tI.events.clack()
+
+    test.equal Session.get( "mixin-event" ), true, "Mixin events extend instead of override the event map."
+    test.equal Session.get( "otherMixin-event" ), true, "Mixin events extend instead of override the event map."
+
+    Session.set "mixin-event", undefined
+    Session.set "otherMixin-event", undefined
+
+    class Widget extends Component
+      @extend Mixin
+      @extend OtherMixin
+      events:
+        "clock": ( event, target ) -> Session.set "instance-event", true
+
+    Template.componentFixture.created = -> new Widget @
+    component = UI.renderWithData Template.componentFixture, data
+    tI = component.templateInstance
+
+    tI.events.clock()
+
+    test.equal tI.events.click, undefined, "Setting instance events overrides all mixin events."
+    test.equal tI.events.clack, undefined, "Setting instance events overrides all mixin events."
+    test.equal Session.get( "instance-event" ), true, "Setting instance events overrides all mixin events."
+
+    Session.set "instance-event", undefined
 
 
 

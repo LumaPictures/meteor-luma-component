@@ -2,6 +2,7 @@
 class Component
 
   # ## Template Instance
+  events: {}
 
   # ##### constructor( Object or Null )
   constructor: ( context = {} ) ->
@@ -19,7 +20,7 @@ class Component
     unless @data.options then @data.options = {}
 
     if Meteor.isClient and templateInstance.__component__
-      templateInstance.__component__.events = {}
+      templateInstance.__component__.events = @events
       unless @data.id
         @data.id = templateInstance.__component__.guid
         @data.selector = "##{ @constructor.name }-#{ @data.id }"
@@ -33,9 +34,6 @@ class Component
       @options _.defaults @options(), @defaults()
 
     if Meteor.isClient and templateInstance.__component__
-        if templateInstance.__component__.events
-          _.extend templateInstance.__component__.events, @events
-        else templateInstance.__component__.events = @events
         templateInstance = _.extend templateInstance, @
         templateInstance.data.self = templateInstance
     if Meteor.isServer
@@ -141,7 +139,10 @@ class Component
   @include: ( obj ) ->
     for key, value of obj when key not in Component.keywords
       # Assign properties to the prototype
-      @::[ key ] = value
+      if key is "events"
+        @::events = _.extend @::events, value
+      else
+        @::[ key ] = value
 
     obj.included?.apply @
     return @
