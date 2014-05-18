@@ -200,7 +200,8 @@ if Meteor.isClient
     componentWithoutId = UI.renderWithData Template.componentFixture, _.omit data, "id"
     tI2 = componentWithoutId.templateInstance
 
-    test.equal tI2.selector(), "#Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to <ClassName>-<guid>"
+    test.equal tI2.id(), "Widget-#{ tI2.__component__.guid }", "If no id is provided the id is set to <ClassName>-<guid>"
+    test.equal tI2.selector(), "#Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to #<ClassName>-<guid>"
 
 Tinytest.add "Luma Component - Default Options", ( test ) ->
   data =
