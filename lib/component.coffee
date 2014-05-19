@@ -25,9 +25,6 @@ class Component
         @data.id = "#{ @constructor.name }-#{ templateInstance.__component__.guid }"
       @data.selector = "##{ @data.id }"
 
-    if Meteor.isServer
-      @data.selector = "server"
-
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data
 
@@ -74,7 +71,7 @@ class Component
   log: ( message, object ) ->
     if @isDebug()
       if @isDebug() is "all" or message.indexOf( @isDebug() ) isnt -1
-        console.log "#{ @constructor.name }:#{ @selector() }:#{ message } ->", object
+        console.log "#{ @constructor.name }:#{ @id() }:#{ message } ->", object
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object
