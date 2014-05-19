@@ -1,6 +1,10 @@
 # Component Base Class
 class Component
 
+  # ## __name__ [ String ]
+  # A dance around minification of class names
+  __name__: "Component"
+
   # ## Template Instance
   events: {}
 
@@ -22,7 +26,7 @@ class Component
     if Meteor.isClient and templateInstance.__component__
       templateInstance.__component__.events = @events
       unless @data.id
-        @data.id = "#{ @constructor.name }-#{ templateInstance.__component__.guid }"
+        @data.id = "#{ @__name__ }-#{ templateInstance.__component__.guid }"
       @data.selector = "##{ @data.id }"
 
     # Add getter setter methods for everything in the component data context.
@@ -71,7 +75,7 @@ class Component
   log: ( message, object ) ->
     if @isDebug()
       if @isDebug() is "all" or message.indexOf( @isDebug() ) isnt -1
-        console.log "#{ @constructor.name }:#{ @id() }:#{ message } ->", object
+        console.log "#{ @__name__ }:#{ @id() }:#{ message } ->", object
 
   # ##### addGetterSetter( String, String )
   # Adds Getter Setter methods to all properties of the supplied object

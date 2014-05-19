@@ -31,7 +31,7 @@ ComponentMixins.ChooseTemplate =
   extended: ->
     @include
       # ##### defaultTemplate()
-      defaultTemplate: -> return "#{ @constructor.name }Default"
+      defaultTemplate: -> return "#{ @__name__ }Default"
 
       # ##### chooseTemplate ( String )
       # Return the template specified in the component parameters
