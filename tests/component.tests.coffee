@@ -1,6 +1,33 @@
+Tinytest.add "Luma Component - Instantiation", ( test ) ->
+  class Whatever extends Component
+
+  try
+    duh = new Whatever {}
+  catch error
+    test.equal error.message, "All components must have defined a unique __name__ instance property", "An error is thrown if __name__ instance property is not defined."
+
+  if Meteor.isServer
+    class Ummm extends Component
+      __name__: "Umm"
+
+    umm = new Ummm {}
+
+    try
+      umm.rendered()
+    catch error
+      test.equal error.message, "Rendered callback is only available on the client.", "Calling the rendered method on the server should throw an error."
+
+    try
+      umm.destroyed()
+    catch error
+      test.equal error.message, "Destroyed callback is only available on the client.", "Calling the rendered method on the server should throw an error."
+
+
+
 Tinytest.add "Luma Component - Getter Setters", ( test ) ->
 
   class Car extends Component
+    __name__: "Car"
 
   data =
     doors: 2
@@ -68,6 +95,7 @@ Tinytest.add "Luma Component - Mixin Support", ( test ) ->
     destroy: ( id ) -> return true
 
   class User extends Component
+    __name__: "User"
     @extend classProperties
     @include instanceProperties
 
@@ -90,6 +118,7 @@ Tinytest.add "Luma Component - Mixin Support", ( test ) ->
         destroy: ( id ) -> return true
 
   class Model extends Component
+    __name__: "Model"
     @extend ORM
 
   model = new Model()
@@ -139,6 +168,7 @@ if Meteor.isClient
           unset: -> Session.set "destroyed", true
 
     class Model extends Component
+      __name__: "Model"
       @extend ORM
       constructor: ->
         super
@@ -156,8 +186,6 @@ if Meteor.isClient
     Session.setDefault "destroyed", undefined
 
     Template.componentFixture.created = -> new Model @
-    Template.componentFixture.rendered = -> @rendered()
-    Template.componentFixture.destroyed = -> @destroyed()
 
     component = UI.renderWithData Template.componentFixture, data
     tI = component.templateInstance
@@ -189,6 +217,7 @@ if Meteor.isClient
       email: "austinrivas@gmail.com"
 
     class Widget extends Component
+      __name__: "Widget"
 
     Template.componentFixture.created = -> new Widget @
 
@@ -219,6 +248,7 @@ Tinytest.add "Luma Component - Default Options", ( test ) ->
   mergedOptions = _.defaults options, defaults
 
   class Widget extends Component
+    __name__: "Widget"
     defaults: defaults
 
   if Meteor.isServer
@@ -259,6 +289,7 @@ if Meteor.isClient
             "clack": ( event, target ) -> Session.set "otherMixin-event", true
 
     class Widget extends Component
+      __name__: "Widget"
       events:
         "click": ( event, target ) -> Session.set "instance-event", true
 
@@ -272,6 +303,7 @@ if Meteor.isClient
     Session.set "instance-event", false
 
     class Widget extends Component
+      __name__: "Widget"
       @extend Mixin
 
     Template.componentFixture.created = -> new Widget @
@@ -286,6 +318,7 @@ if Meteor.isClient
     Session.set "mixin-event", false
 
     class Widget extends Component
+      __name__: "Widget"
       @extend Mixin
       events:
         "click": ( event, target ) -> Session.set "instance-event", true
@@ -303,6 +336,7 @@ if Meteor.isClient
     Session.set "mixin-event", false
 
     class Widget extends Component
+      __name__: "Widget"
       events:
         "click": ( event, target ) -> Session.set "instance-event", true
       @extend Mixin
@@ -323,6 +357,7 @@ if Meteor.isClient
     Session.set "otherMixin-event", false
 
     class Widget extends Component
+      __name__: "Widget"
       @extend Mixin
       @extend OtherMixin
 
@@ -340,6 +375,7 @@ if Meteor.isClient
     Session.set "otherMixin-event", undefined
 
     class Widget extends Component
+      __name__: "Widget"
       @extend Mixin
       @extend OtherMixin
       events:

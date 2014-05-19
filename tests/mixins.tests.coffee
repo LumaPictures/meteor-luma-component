@@ -2,6 +2,7 @@ if Meteor.isClient
   Tinytest.add "Luma Component Mixins - Choose Template", ( test ) ->
 
     class Widget extends Component
+      __name__: "Widget"
       @extend ComponentMixins.ChooseTemplate
 
     Template.componentFixture.created = -> new Widget @

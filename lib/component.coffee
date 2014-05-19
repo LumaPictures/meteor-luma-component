@@ -3,13 +3,15 @@ class Component
 
   # ## __name__ [ String ]
   # A dance around minification of class names in @constructor.name
-  __name__: "Component"
+  __name__: undefined
 
   # ## Template Instance
   events: {}
 
   # ##### constructor( Object or Null )
   constructor: ( context = {} ) ->
+    throw new Error "All components must have defined a unique __name__ instance property" if @__name__ is undefined
+
     # If a new component is instantiated on the client the context should be a template instance
     if Meteor.isClient
       templateInstance = context
@@ -48,6 +50,8 @@ class Component
     if Meteor.isClient and templateInstance.__component__
       # Extend the templateInstance with the current class context
       self = _.extend templateInstance, @
+      self.__component__.rendered = self.rendered
+      self.__component__.destroyed = self.destroyed
       # Create a circular reference in the data context to make helpers available in the template
       self.data.self = self
     if Meteor.isServer

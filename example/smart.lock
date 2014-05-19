@@ -13,8 +13,8 @@
       },
       "luma-ui": {
         "git": "https://github.com/lumapictures/meteor-luma-ui.git",
-        "tag": "v0.1.18",
-        "commit": "3979751396c463f512c491980de6b2882a5b5dbb"
+        "tag": "v0.1.20",
+        "commit": "e36c4634eaaf0cb9b0ed51da4715e75cf4075979"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",
