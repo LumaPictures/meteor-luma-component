@@ -2,7 +2,7 @@
 class Component
 
   # ## __name__ [ String ]
-  # A dance around minification of class names
+  # A dance around minification of class names in @constructor.name
   __name__: "Component"
 
   # ## Template Instance
@@ -10,44 +10,64 @@ class Component
 
   # ##### constructor( Object or Null )
   constructor: ( context = {} ) ->
+    # If a new component is instantiated on the client the context should be a template instance
     if Meteor.isClient
       templateInstance = context
+      # If the template instance has a data context set the component data property to the data context.
       if "data" of templateInstance
         @data = templateInstance.data
+    # If a new component is instantiated on the server the context is just the data
     if Meteor.isServer
       @data = context
 
+    # if no data context was set initialize it to an empty object
     @data = {} unless @data
 
+    # if defaults are defined set them on the data context
     if @data and @defaults then @data.defaults = @defaults
 
+    # Initialize options to an empty object if they are not defined
     unless @data.options then @data.options = {}
 
     if Meteor.isClient and templateInstance.__component__
+      # Bind events to the template context
       templateInstance.__component__.events = @events
+      # Dynamically generate an id if none was provided
       unless @data.id
         @data.id = "#{ @__name__ }-#{ templateInstance.__component__.guid }"
+      # Create a unique selector from the id property
       @data.selector = "##{ @data.id }"
 
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data
 
+    # If default options are present merge them in with the options property
     if @options and @defaults
       @options _.defaults @options(), @defaults()
 
     if Meteor.isClient and templateInstance.__component__
-        templateInstance = _.extend templateInstance, @
-        templateInstance.data.self = templateInstance
+      # Extend the templateInstance with the current class context
+      self = _.extend templateInstance, @
+      # Create a circular reference in the data context to make helpers available in the template
+      self.data.self = self
     if Meteor.isServer
-      templateInstance = @
-
-    @log "created", templateInstance
+      # On the server this is just a standard class
+      self = @
+    @log "created", self
 
   # ##### rendered()
-  rendered: -> @log "rendered", @
+  rendered: ->
+    if Meteor.isClient
+      @log "rendered", @
+    if Meteor.isServer
+      throw new Error "Rendered callback is only available on the client."
 
   # ##### destroyed()
-  destroyed: -> @log "destroyed", @
+  destroyed: ->
+    if Meteor.isClient
+      @log "destroyed", @
+    if Meteor.isServer
+      throw new Error "Destroyed callback is only available on the client."
 
   # ## Logging
 
