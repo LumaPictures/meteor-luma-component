@@ -25,6 +25,9 @@ class Component
         @data.id = "#{ @constructor.name }-#{ templateInstance.__component__.guid }"
       @data.selector = "##{ @data.id }"
 
+    if Meteor.isServer
+      @data.selector = "server"
+
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data
 
