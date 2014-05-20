@@ -284,14 +284,14 @@ Defining an event map on the class will override *ALL* events provided by mixins
 ```
 $ git clone https://github.com/LumaPictures/meteor-luma-component
 $ cd LumaPictures/meteor-luma-component
-$ mrt && meteor
+$ mrt install && meteor
 ```
 
 ## Tests
 ```
 $ git clone https://github.com/LumaPictures/meteor-luma-component
 $ cd LumaPictures/meteor-luma-component
-$ mrt && meteor test-packages luma-component
+$ mrt install && meteor test-packages luma-component
 ```
 
 ## Contributing
