@@ -296,4 +296,4 @@ $ mrt install && meteor test-packages luma-component
 
 ## Contributing
 
-* [ Meteor-Talk Announcement ]()
+* [ Meteor-Talk Announcement ](https://groups.google.com/forum/#!topic/meteor-talk/3MYgSc9OK6c)
