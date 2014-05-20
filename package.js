@@ -16,15 +16,12 @@ Package.on_use(function (api, where) {
   ], [ 'client', 'server' ]);
 
   api.add_files([
-    'lib/mixins/base.mixin.coffee'
+    'lib/mixins/Base.mixin.coffee',
+    'lib/mixins/ChooseTemplate.mixin.coffee'
   ], [ 'client', 'server' ]);
 
   api.add_files([
-    'lib/mixins/chooseTemplate.mixin.coffee'
-  ], [ 'client' ]);
-
-  api.add_files([
-    'lib/component.coffee'
+    'lib/Component.coffee'
   ], [ 'client', 'server']);
   /* END Component */
 });
@@ -46,11 +43,11 @@ Package.on_test(function (api) {
   ], [ 'client' ]);
 
   api.add_files([
-    'tests/fixtures.html'
+    'tests/fixtures/ComponentFixture.html'
   ], [ 'client' ]);
 
   api.add_files([
-    'tests/component.tests.coffee',
-    'tests/mixins.tests.coffee'
+    'tests/Component.test.coffee',
+    'tests/mixins/ChooseTemplate.mixin.test.coffee'
   ], ['client', 'server']);
 });
