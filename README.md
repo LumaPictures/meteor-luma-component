@@ -229,6 +229,7 @@ All included mixins can be found under the `ComponentMixins` namespace that is e
         {{> MyComponent template="MyComponentRude" }}
     </template>
     ```
+
 ### Events
 
 There are several ways you can bind events to a component, the simplest and least flexible is simply setting the event map as an instance property of your class.
@@ -274,7 +275,7 @@ Be aware that mixins will override other mixins events if their triggers conflic
 
 Defining an event map on the class will override *ALL* events provided by mixins. I am still unsure as to whether or not this is the desired behavior.
 
-### Luma Component in the Wild
+## Luma Component in the Wild
 
 * [ jquery-datatables ](https://github.com/LumaPictures/meteor-jquery-datatables/blob/master/lib/DataTables.component.coffee)
 * [ jquery-select2 ](https://github.com/LumaPictures/meteor-jquery-select2/blob/master/lib/Select2.component.coffee)
