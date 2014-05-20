@@ -31,7 +31,7 @@ class MyComponent extends Component
 
 Note that if you are declaring the component in your application instead of a package ( recommended ) use the `@` context to make your component globally accessible.
 
-``coffeescript
+```coffeescript
 class @MyComponent extends Component
     __name__: "MyComponent"
 ```
@@ -42,7 +42,7 @@ To actually instantiate the component you extend a template instance ( can be an
 Template.MyComponent.created = -> new MyComponent @
 ```
 
-This will automatically bind any `rendered` or `destroyed` methods in your class to the corresponding template callbacks. Calling super will ensure that the parent callback method is also called.
+This will automatically bind any `rendered` or `destroyed` methods and `events` in your class to the corresponding template. Calling super will ensure that the parent callback method is also called.
 
 ```coffeescript
 class MyComponent extends Component
@@ -200,35 +200,35 @@ For a more robust example see the `Component.ChooseTemplate` mixin below.
 
 All included mixins can be found under the `ComponentMixins` namespace that is exported by this package along with the `Component` class.
 
-    * Component.ChooseTemplate - Dynamically render a template or the default `Template.<__name__>Default`
+* Component.ChooseTemplate - Dynamically render a template or the default `Template.<__name__>Default`
 
-        ```coffeescript
-            class MyComponent extends Component
-                if Meteor.isClient
-                    @extend Component.ChooseTemplate
-        ```
+    ```coffeescript
+    class MyComponent extends Component
+        if Meteor.isClient
+            @extend Component.ChooseTemplate
+    ```
 
-        ```html
-            <template name="MyComponentDefault">
-                <h1> {{salutations}} </h1>
-            </template>
+    ```html
+    <template name="MyComponentDefault">
+        <h1> {{salutations}} </h1>
+    </template>
 
-            <template name="MyComponentRude">
-                <h1> Go Away! </h1>
-            </template>
+    <template name="MyComponentRude">
+        <h1> Go Away! </h1>
+    </template>
 
-            <template name="MyComponent">
-                {{#with self.chooseTemplate template }}
-                  {{#with .. }}     {{! original arguments to MyComponent }}
-                      {{> .. }}     {{! return value from chooseTemplate( template ) }}
-                  {{/with}}
-                {{/with}}
-            </template>
+    <template name="MyComponent">
+        {{#with self.chooseTemplate template }}
+          {{#with .. }}     {{! original arguments to MyComponent }}
+              {{> .. }}     {{! return value from chooseTemplate( template ) }}
+          {{/with}}
+        {{/with}}
+    </template>
 
-            <template name="home">
-                {{> MyComponent template="MyComponentRude" }}
-            </template>
-        ```
+    <template name="home">
+        {{> MyComponent template="MyComponentRude" }}
+    </template>
+    ```
 ### Events
 
 There are several ways you can bind events to a component, the simplest and least flexible is simply setting the event map as an instance property of your class.
@@ -276,8 +276,8 @@ Defining an event map on the class will override *ALL* events provided by mixins
 
 ### Luma Component in the Wild
 
-    * [ jquery-datatables ](https://github.com/LumaPictures/meteor-jquery-datatables/blob/master/lib/DataTables.component.coffee)
-    * [ jquery-select2 ](https://github.com/LumaPictures/meteor-jquery-select2/blob/master/lib/Select2.component.coffee)
+* [ jquery-datatables ](https://github.com/LumaPictures/meteor-jquery-datatables/blob/master/lib/DataTables.component.coffee)
+* [ jquery-select2 ](https://github.com/LumaPictures/meteor-jquery-select2/blob/master/lib/Select2.component.coffee)
 
 
 ## Example
@@ -295,3 +295,5 @@ $ mrt && meteor test-packages luma-component
 ```
 
 ## Contributing
+
+* [ Meteor-Talk Announcement ]()
