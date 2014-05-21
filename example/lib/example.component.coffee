@@ -21,14 +21,11 @@
 class @ExampleComponent extends Component
   __name__: "ExampleComponent"
   @extend ComponentMixins.ChooseTemplate
-  @extend ComponentMixins.Reactive
   @extend ExampleComponentMixins.Events
   @extend ExampleComponentMixins.Background
 
   rendered: ->
-    if Meteor.isClient
-      @createHelper "backgroundHelper", @backgroundHelper.bind( @ )
-      super
+    super
 
   destroyed: ->
     super

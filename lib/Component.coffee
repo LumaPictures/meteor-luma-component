@@ -62,6 +62,7 @@ class Component
   # ##### rendered()
   rendered: ->
     if Meteor.isClient
+      @__component__.self = @
       @log "rendered", @
     if Meteor.isServer
       throw new Error "Rendered callback is only available on the client."
