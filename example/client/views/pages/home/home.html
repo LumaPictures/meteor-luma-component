@@ -2,35 +2,22 @@
   {{#panel}}
     {{> panelHeading title="Example Component" }}
     {{#panelBody}}
-      <div class="row">
+      <div class="row block">
         <div class="col-sm-6">
           {{> example
               id="Rectangle"
-              width="100%"
-              height="200px"
-              viewbox="0 0 1200 400"
               desc="Example Rectangle"
               template="rectangle"
-              background=rectangleBackground
-              border=rectangleBorder
-              fill=rectangleFill
-              stroke=rectangleStroke
+              options=rectangleOptions
               debug="all"
           }}
         </div>
         <div class="col-sm-6">
           {{> example
               id="Circle"
-              width="100%"
-              height="200px"
-              viewbox="0 0 1200 400"
               desc="Example Circle"
               template="circle"
-              background=circleBackground
-              border=circleBorder
-              fill=circleFill
-              stroke=circleStroke
-              debug="all"
+              options=circleOptions
           }}
         </div>
       </div>

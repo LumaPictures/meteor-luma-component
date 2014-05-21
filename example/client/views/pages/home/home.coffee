@@ -8,15 +8,25 @@ Template.home.created = ->
     Session.set "#{ component }_stroke", "blue"
 
 Template.home.helpers
-  rectangleBackground: -> Session.get "Rectangle_background"
-  rectangleBorder: -> Session.get "Rectangle_border"
-  rectangleFill: -> Session.get "Rectangle_fill"
-  rectangleStroke: -> Session.get "Rectangle_stroke"
+  rectangleOptions: -> return {
+    width: "100%"
+    height: "200px"
+    viewbox: "0 0 1200 400"
+    background: Session.get "Rectangle_background"
+    border: Session.get "Rectangle_border"
+    fill: Session.get "Rectangle_fill"
+    stroke: Session.get "Rectangle_stroke"
+  }
 
-  circleBackground: -> Session.get "Circle_background"
-  circleBorder: -> Session.get "Circle_border"
-  circleFill: -> Session.get "Circle_fill"
-  circleStroke: -> Session.get "Circle_stroke"
+  circleOptions: -> return {
+    width: "100%"
+    height: "200px"
+    viewbox: "0 0 1200 400"
+    background: Session.get "Circle_background"
+    border: Session.get "Circle_border"
+    fill: Session.get "Circle_fill"
+    stroke: Session.get "Circle_stroke"
+  }
 
 Template.home.events
 	"change #Rectangle .background select": ( event, template ) -> Session.set "Rectangle_background", event.val

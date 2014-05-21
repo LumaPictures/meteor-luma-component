@@ -1,7 +1,8 @@
 <template name="example">
-    <svg width="{{width}}"
-         height="{{height}}"
-         viewBox="{{viewbox}}"
+    {{backgroundCallback options.background }}
+    <svg width="{{options.width}}"
+         height="{{options.height}}"
+         viewBox="{{options.viewbox}}"
          xmlns="http://www.w3.org/2000/svg"
          version="1.1">
         <desc>{{desc}}</desc>
@@ -19,16 +20,16 @@
 
 <template name="rectangle">
     <rect x="1" y="1" width="1198" height="398"
-          fill="{{background}}" stroke="{{border}}" stroke-width="2"/>
+          fill="{{options.background}}" stroke="{{options.border}}" stroke-width="2"/>
 
     <rect x="400" y="100" width="400" height="200"
-          fill="{{fill}}" stroke="{{stroke}}" stroke-width="10"  />
+          fill="{{options.fill}}" stroke="{{options.stroke}}" stroke-width="10"  />
 </template>
 
 <template name="circle">
     <rect x="1" y="1" width="1198" height="398"
-          fill="{{background}}" stroke="{{border}}" stroke-width="2"/>
+          fill="{{options.background}}" stroke="{{options.border}}" stroke-width="2"/>
 
     <circle cx="600" cy="200" r="100"
-            fill="{{fill}}" stroke="{{stroke}}" stroke-width="10"  />
+            fill="{{options.fill}}" stroke="{{options.stroke}}" stroke-width="10"  />
 </template>

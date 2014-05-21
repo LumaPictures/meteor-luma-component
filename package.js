@@ -17,7 +17,8 @@ Package.on_use(function (api, where) {
 
   api.add_files([
     'lib/mixins/Base.mixin.coffee',
-    'lib/mixins/ChooseTemplate.mixin.coffee'
+    'lib/mixins/ChooseTemplate.mixin.coffee',
+    'lib/mixins/Reactive.mixin.coffee'
   ], [ 'client', 'server' ]);
 
   api.add_files([
