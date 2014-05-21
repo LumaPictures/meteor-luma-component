@@ -5,5 +5,7 @@
   "author": "Austin Rivas <austinrivas@gmail.com> (https://github.com/austinrivas)",
   "version": "1.0.1",
   "git": "https://github.com/LumaPictures/meteor-luma-component",
-  "packages": {}
+  "packages": {
+    "jquery-select2": {}
+  }
 }

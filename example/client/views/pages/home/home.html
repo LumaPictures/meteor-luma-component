@@ -5,25 +5,86 @@
       <div class="row">
         <div class="col-sm-6">
           {{> example
-              id="rectangle"
+              id="Rectangle"
               width="100%"
               height="200px"
               viewbox="0 0 1200 400"
               desc="Example rect01 - rectangle with sharp corners"
               template="rectangle"
+              background="none"
+              border="red"
+              fill="yellow"
+              stroke="blue"
               debug="all" }}
         </div>
         <div class="col-sm-6">
           {{> example
-              id="circle"
+              id="Circle"
               width="100%"
               height="200px"
               viewbox="0 0 1200 400"
               desc="Example circle01 - circle filled with red and stroked with blue"
               template="circle"
+              background="none"
+              border="red"
+              fill="yellow"
+              stroke="blue"
               debug="all" }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6">
+          {{> componentControl id="Rectangle" }}
+        </div>
+        <div class="col-sm-6">
+          {{> componentControl id="Circle" }}
         </div>
       </div>
     {{/panelBody}}
   {{/panel}}
+</template>
+
+<template name="componentControl">
+  <form class="form-horizontal form-separate" action="#" role="form">
+    <h6><i class="icon-page-break"></i> {{id}} Control</h6>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Background</label>
+      <div class="col-md-10">
+        {{#select2 placeholder="Select a Background Color..." }}
+          {{> colors }}
+        {{/select2}}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Border</label>
+      <div class="col-md-10">
+        {{#select2 placeholder="Select a Border Color..." }}
+          {{> colors }}
+        {{/select2}}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Fill</label>
+      <div class="col-md-10">
+        {{#select2 placeholder="Select a Fill Color..." }}
+          {{> colors }}
+        {{/select2}}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Stroke</label>
+      <div class="col-md-10">
+        {{#select2 placeholder="Select a Stroke Color..." }}
+          {{> colors }}
+        {{/select2}}
+      </div>
+    </div>
+  </form>
+</template>
+
+<template name="colors">
+  <option value="red">Red</option>
+  <option value="yellow">Yellow</option>
+  <option value="blue">Blue</option>
+  <option value="green">Green</option>
 </template>

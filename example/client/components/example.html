@@ -19,16 +19,16 @@
 
 <template name="rectangle">
     <rect x="1" y="1" width="1198" height="398"
-          fill="none" stroke="blue" stroke-width="2"/>
+          fill="{{background}}" stroke="{{border}}" stroke-width="2"/>
 
     <rect x="400" y="100" width="400" height="200"
-          fill="yellow" stroke="navy" stroke-width="10"  />
+          fill="{{fill}}" stroke="{{stroke}}" stroke-width="10"  />
 </template>
 
 <template name="circle">
     <rect x="1" y="1" width="1198" height="398"
-          fill="none" stroke="blue" stroke-width="2"/>
+          fill="{{background}}" stroke="{{border}}" stroke-width="2"/>
 
     <circle cx="600" cy="200" r="100"
-            fill="red" stroke="blue" stroke-width="10"  />
+            fill="{{fill}}" stroke="{{stroke}}" stroke-width="10"  />
 </template>
