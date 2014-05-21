@@ -7,6 +7,15 @@
             "click": ( event, template ) ->
               template.log "event:click", event
 
+  Background:
+    extended: ->
+      if Meteor.isClient
+        @include
+          backgroundHelper: ( data ) ->
+            @options().background = data
+            @log "backgroundCallback", @options().background
+
+
 
 
 class @ExampleComponent extends Component
@@ -14,16 +23,11 @@ class @ExampleComponent extends Component
   @extend ComponentMixins.ChooseTemplate
   @extend ComponentMixins.Reactive
   @extend ExampleComponentMixins.Events
+  @extend ExampleComponentMixins.Background
 
   rendered: ->
     if Meteor.isClient
-
-      backgroundCallback = ( data ) ->
-        @options().background = data
-        @log "backgroundCallback", @options().background
-
-      @createReactiveCallback "backgroundCallback", backgroundCallback.bind( @ )
-
+      @createHelper "backgroundHelper", @backgroundHelper.bind( @ )
       super
 
   destroyed: ->

@@ -25,4 +25,4 @@ ComponentMixins.Reactive =
   extended: ->
     if Meteor.isClient
       @include
-        createReactiveCallback: ( key, func ) -> @__component__[ key ] = func
+        createHelper: ( key, func ) -> @__component__[ key ] = func
