@@ -134,6 +134,7 @@ class Component
       else if args.length == 1
         # set the data to the first element of args
         @[ propertyAttr ][ attr ] = args[ 0 ]
+        @log "#{ propertyAttr }:#{ attr }:set", args[ 0 ]
       else throw new Error "Only one argument is allowed to a setter method."
 
   # ## Mixins

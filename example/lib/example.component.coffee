@@ -11,25 +11,18 @@
     extended: ->
       if Meteor.isClient
         @include
-          backgroundHelper: ( data ) ->
-            @options().background = data
-            @log "backgroundCallback", @options().background
-
-
-
+          backgroundHelper: ( background ) ->
+            unless background is @options().background
+              options = @options()
+              options.background = background
+              @options options
+            @log "backgroundHelper", @options().background
 
 class @ExampleComponent extends Component
   __name__: "ExampleComponent"
   @extend ComponentMixins.ChooseTemplate
   @extend ExampleComponentMixins.Events
   @extend ExampleComponentMixins.Background
-
-  rendered: ->
-    super
-
-  destroyed: ->
-    super
-
 
 if Meteor.isClient
   Template.example.created = -> new ExampleComponent @
