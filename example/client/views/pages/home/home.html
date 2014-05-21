@@ -47,9 +47,9 @@
 </template>
 
 <template name="componentControl">
-  <form class="form-horizontal form-separate" action="#" role="form">
+  <form class="form-horizontal form-separate" id="{{id}}" role="form">
     <h6><i class="icon-page-break"></i> {{id}} Control</h6>
-    <div class="form-group">
+    <div class="form-group background">
       <label class="col-md-2 control-label">Background</label>
       <div class="col-md-10">
         {{#select2 placeholder="Select a Background Color..." }}
@@ -57,7 +57,7 @@
         {{/select2}}
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group border">
       <label class="col-md-2 control-label">Border</label>
       <div class="col-md-10">
         {{#select2 placeholder="Select a Border Color..." }}
@@ -65,7 +65,7 @@
         {{/select2}}
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group fill">
       <label class="col-md-2 control-label">Fill</label>
       <div class="col-md-10">
         {{#select2 placeholder="Select a Fill Color..." }}
@@ -73,7 +73,7 @@
         {{/select2}}
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group stroke">
       <label class="col-md-2 control-label">Stroke</label>
       <div class="col-md-10">
         {{#select2 placeholder="Select a Stroke Color..." }}
@@ -85,8 +85,11 @@
 </template>
 
 <template name="colors">
+  <option value="white">White</option>
+  <option value="black">Black</option>
   <option value="red">Red</option>
   <option value="yellow">Yellow</option>
   <option value="blue">Blue</option>
   <option value="green">Green</option>
+  <option value="none">None</option>
 </template>
