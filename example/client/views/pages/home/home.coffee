@@ -28,6 +28,19 @@ Template.home.helpers
     stroke: Session.get "Circle_stroke"
   }
 
+  selected: -> return {
+    rectangle:
+      background: Session.get "Rectangle_background"
+      border: Session.get "Rectangle_border"
+      fill: Session.get "Rectangle_fill"
+      stroke: Session.get "Rectangle_stroke"
+    circle:
+      background: Session.get "Circle_background"
+      border: Session.get "Circle_border"
+      fill: Session.get "Circle_fill"
+      stroke: Session.get "Circle_stroke"
+  }
+
 Template.home.events
 	"change #Rectangle .background select": ( event, template ) -> Session.set "Rectangle_background", event.val
 	"change #Rectangle .border select": ( event, template ) -> Session.set "Rectangle_border", event.val

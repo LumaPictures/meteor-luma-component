@@ -19,8 +19,8 @@
       },
       "jquery-select2": {
         "git": "https://github.com/LumaPictures/meteor-jquery-select2",
-        "tag": "v0.1.9",
-        "commit": "256e89c0a4d117fbc4f82ff6251730bb04b1178d"
+        "tag": "v0.1.11",
+        "commit": "345858207373494c3ba1197d5c4fb5937991086d"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

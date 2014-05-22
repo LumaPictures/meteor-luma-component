@@ -23,10 +23,10 @@
       </div>
       <div class="row">
         <div class="col-sm-6">
-          {{> componentControl id="Rectangle" }}
+          {{> componentControl id="Rectangle" selected=selected.rectangle }}
         </div>
         <div class="col-sm-6">
-          {{> componentControl id="Circle" }}
+          {{> componentControl id="Circle" selected=selected.circle }}
         </div>
       </div>
     {{/panelBody}}
@@ -39,7 +39,10 @@
     <div class="form-group background">
       <label class="col-md-2 control-label">Background</label>
       <div class="col-md-10">
-        {{#select2 placeholder="Select a Background Color..." }}
+        {{#select2
+          placeholder="Select a Background Color..."
+          selected=selected.background
+        }}
           {{> colors }}
         {{/select2}}
       </div>
@@ -47,7 +50,10 @@
     <div class="form-group border">
       <label class="col-md-2 control-label">Border</label>
       <div class="col-md-10">
-        {{#select2 placeholder="Select a Border Color..." }}
+        {{#select2
+          placeholder="Select a Border Color..."
+          selected=selected.border
+        }}
           {{> colors }}
         {{/select2}}
       </div>
@@ -55,7 +61,10 @@
     <div class="form-group fill">
       <label class="col-md-2 control-label">Fill</label>
       <div class="col-md-10">
-        {{#select2 placeholder="Select a Fill Color..." }}
+        {{#select2
+          placeholder="Select a Fill Color..."
+          selected=selected.fill
+        }}
           {{> colors }}
         {{/select2}}
       </div>
@@ -63,7 +72,10 @@
     <div class="form-group stroke">
       <label class="col-md-2 control-label">Stroke</label>
       <div class="col-md-10">
-        {{#select2 placeholder="Select a Stroke Color..." }}
+        {{#select2
+          placeholder="Select a Stroke Color..."
+          selected=selected.stroke
+        }}
           {{> colors }}
         {{/select2}}
       </div>
