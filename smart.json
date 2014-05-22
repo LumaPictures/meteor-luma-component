@@ -3,7 +3,7 @@
   "description": "Blaze component mixins and base class",
   "homepage": "https://github.com/LumaPictures/meteor-luma-component",
   "author": "Austin Rivas <austinrivas@gmail.com> (https://github.com/austinrivas)",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "git": "https://github.com/LumaPictures/meteor-luma-component",
   "packages": {}
 }
