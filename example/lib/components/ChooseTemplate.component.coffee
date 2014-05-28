@@ -18,11 +18,11 @@
               @options options
             @log "backgroundHelper", @options().background
 
-class @ExampleComponent extends Component
-  __name__: "ExampleComponent"
+class @ChooseTemplateComponent extends Component
+  __name__: "ChooseTemplate"
   @extend ComponentMixins.ChooseTemplate
   @extend ExampleComponentMixins.Events
   @extend ExampleComponentMixins.Background
 
 if Meteor.isClient
-  Template.example.created = -> new ExampleComponent @
+  Template.ChooseTemplate.created = -> new ChooseTemplateComponent @

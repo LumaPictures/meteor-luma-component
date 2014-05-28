@@ -10,7 +10,8 @@ Tinytest.add "Luma Component - Instantiation", ( test ) ->
     class Ummm extends Component
       __name__: "Umm"
 
-    umm = new Ummm {}
+    umm = new Ummm
+      subscription: "umm"
 
     try
       umm.rendered()
@@ -40,13 +41,7 @@ Tinytest.add "Luma Component - Getter Setters", ( test ) ->
       convertible:
         hardTop: true
 
-  if Meteor.isClient
-    context =
-      data: data
-  if Meteor.isServer
-    context = data
-
-  sportsCar = new Car context
+  sportsCar = instantiateComponent Car, data
 
   test.equal sportsCar.data, data, "Properties should be identical after instantiation."
   test.equal sportsCar.doors(), data.doors, "Attribute accessor should return property value."
@@ -58,15 +53,6 @@ Tinytest.add "Luma Component - Getter Setters", ( test ) ->
   test.equal sportsCar.options().performance.tires.name, data.options.performance.tires.name, "Attribute accessor should return property value."
   test.equal sportsCar.options().convertible, data.options.convertible, "Attribute accessor should return property value."
   test.equal sportsCar.options().convertible.hardTop, data.options.convertible.hardTop, "Attribute accessor should return property value."
-
-  ###try
-    sportsCar.doesntExist()
-  catch error
-    if Meteor.isServer
-      message = "Object #<Car> has no method 'doesntExist'"
-    if Meteor.isClient
-      message = "undefined is not a function"
-    test.equal error.message, message, "Calling an undefined accessor should result in an error."###
 
   if sportsCar.color
     test.equal true, true, "Accessor methods should serve dual purpose as conditionals."
@@ -103,7 +89,8 @@ Tinytest.add "Luma Component - Mixin Support", ( test ) ->
     name: "Austin Rivas"
     email: "austinrivas@gmail.com"
 
-  user = new User()
+  user = instantiateComponent User, {}
+
   test.equal User.find( 1 ), 1, "Class methods mixed into a class should be present on the class."
   test.equal User.create( attrs ), attrs, "Class methods mixed into a class should be present on the class."
   test.equal user.save( 1 ), 1, "Instance methods mixed into a class should be present on instances of that class."
@@ -121,7 +108,8 @@ Tinytest.add "Luma Component - Mixin Support", ( test ) ->
     __name__: "Model"
     @extend ORM
 
-  model = new Model()
+  model = instantiateComponent Model, {}
+
   test.equal Model.find( 1 ), 1, "Class methods mixed into a class should be present on the class."
   test.equal Model.create( attrs ), attrs, "Class methods mixed into a class should be present on the class."
   test.equal model.save( 1 ), 1, "Instance methods mixed into a class should be present on instances of that class."
@@ -134,12 +122,7 @@ Tinytest.add "Luma Component - Mixin Support", ( test ) ->
       key: "value"
     ]
 
-  if Meteor.isClient
-    context =
-      data: data
-  if Meteor.isServer
-    context = data
-  user = new Model context
+  user = instantiateComponent Model, data
 
   test.equal user.name(), "Austin Rivas", "Attribute accessors should still function when mixins are present."
   test.equal user.email(), "austinrivas@gmail.com", "Attribute accessors should still function when mixins are present."
@@ -224,15 +207,11 @@ if Meteor.isClient
     class Widget extends Component
       __name__: "Widget"
 
-    Template.componentFixture.created = -> new Widget @
-
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     test.equal tI.selector(), "##{ data.id }", "If and id is provided it is set as the selector."
 
-    componentWithoutId = UI.renderWithData Template.componentFixture, _.omit data, "id"
-    tI2 = componentWithoutId.templateInstance
+    tI2 = instantiateComponent Widget, _.omit data, "id"
 
     test.equal tI2.id(), "Widget-#{ tI2.__component__.guid }", "If no id is provided the id is set to <ClassName>-<guid>"
     test.equal tI2.selector(), "#Widget-#{ tI2.__component__.guid }", "If no id is provided the selector is set to #<ClassName>-<guid>"
@@ -256,17 +235,9 @@ Tinytest.add "Luma Component - Default Options", ( test ) ->
     __name__: "Widget"
     defaults: defaults
 
-  if Meteor.isServer
-    widget = new Widget data
+  tI = instantiateComponent Widget, data
 
-    test.equal widget.options(), mergedOptions, "If and id is provided it is set as the selector."
-
-  if Meteor.isClient
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
-
-    test.equal tI.options(), mergedOptions, "If and id is provided it is set as the selector."
+  test.equal tI.options(), mergedOptions, "Default options are merged with options property if defined."
 
 if Meteor.isClient
   Tinytest.add "Luma Component - DOM Events", ( test ) ->
@@ -297,9 +268,7 @@ if Meteor.isClient
       events:
         "click": ( event, target ) -> Session.set "instance-event", true
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.click()
 
@@ -310,9 +279,7 @@ if Meteor.isClient
       __name__: "Widget"
       @extend Mixin
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.click()
 
@@ -327,9 +294,7 @@ if Meteor.isClient
       events:
         "click": ( event, target ) -> Session.set "instance-event", true
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.click()
 
@@ -345,9 +310,7 @@ if Meteor.isClient
         "click": ( event, target ) -> Session.set "instance-event", true
       @extend Mixin
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.click()
 
@@ -365,9 +328,7 @@ if Meteor.isClient
       @extend Mixin
       @extend OtherMixin
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.click()
     tI.events.clack()
@@ -385,9 +346,7 @@ if Meteor.isClient
       events:
         "clock": ( event, target ) -> Session.set "instance-event", true
 
-    Template.componentFixture.created = -> new Widget @
-    component = UI.renderWithData Template.componentFixture, data
-    tI = component.templateInstance
+    tI = instantiateComponent Widget, data
 
     tI.events.clock()
 

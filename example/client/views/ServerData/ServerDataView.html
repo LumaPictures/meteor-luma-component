@@ -1,0 +1,41 @@
+<template name="ServerDataView">
+  {{#panel}}
+    {{> panelHeading title="ServerData Example Component" }}
+    {{#panelBody}}
+      <div class="row block">
+        <div class="col-sm-3">
+          <input type="text" id="server-filter" class="form-control pull-left" placeholder="Filter Results" />
+        </div>
+        <div class="col-sm-3">
+          <label class="control-label text-left">Page Limit :</label>
+          {{#select2 id="subscription-limit" selected="10" }}
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          {{/select2}}
+        </div>
+      </div>
+      <div class="row">
+        {{> ServerData
+          subscription="example"
+          debug="subscription:handle"
+          query=query
+          filterQuery=filterQuery
+          subscriptionOptions=subscriptionOptions
+        }}
+      </div>
+      <div class="row">
+        <div class="col-sm-6">
+          <h3 class="pull-left">Showing 1-10 of 100</h3>
+        </div>
+        <div class="col-sm-6">
+          <div class="pull-right">
+            <button class="btn btn-success">Prev</button>
+            <button class="btn btn-success">Next</button>
+          </div>
+        </div>
+      </div>
+    {{/panelBody}}
+  {{/panel}}
+</template>

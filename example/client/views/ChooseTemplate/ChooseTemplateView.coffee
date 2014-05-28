@@ -1,4 +1,4 @@
-Template.home.created = ->
+Template.ChooseTemplateView.created = ->
   components = [ "Rectangle", "Circle" ]
 
   for component in components
@@ -7,7 +7,7 @@ Template.home.created = ->
     Session.set "#{ component }_fill", "yellow"
     Session.set "#{ component }_stroke", "blue"
 
-Template.home.helpers
+Template.ChooseTemplateView.helpers
   rectangleOptions: -> return {
     width: "100%"
     height: "200px"
@@ -41,13 +41,13 @@ Template.home.helpers
       stroke: Session.get "Circle_stroke"
   }
 
-Template.home.events
-	"change #Rectangle .background select": ( event, template ) -> Session.set "Rectangle_background", event.val
-	"change #Rectangle .border select": ( event, template ) -> Session.set "Rectangle_border", event.val
-	"change #Rectangle .fill select": ( event, template ) -> Session.set "Rectangle_fill", event.val
-	"change #Rectangle .stroke select": ( event, template ) -> Session.set "Rectangle_stroke", event.val
+Template.ChooseTemplateView.events
+  "change #Rectangle .background select": ( event, template ) -> Session.set "Rectangle_background", event.val
+  "change #Rectangle .border select": ( event, template ) -> Session.set "Rectangle_border", event.val
+  "change #Rectangle .fill select": ( event, template ) -> Session.set "Rectangle_fill", event.val
+  "change #Rectangle .stroke select": ( event, template ) -> Session.set "Rectangle_stroke", event.val
 
-	"change #Circle .background select": ( event, template ) -> Session.set "Circle_background", event.val
-	"change #Circle .border select": ( event, template ) -> Session.set "Circle_border", event.val
-	"change #Circle .fill select": ( event, template ) -> Session.set "Circle_fill", event.val
-	"change #Circle .stroke select": ( event, template ) -> Session.set "Circle_stroke", event.val
+  "change #Circle .background select": ( event, template ) -> Session.set "Circle_background", event.val
+  "change #Circle .border select": ( event, template ) -> Session.set "Circle_border", event.val
+  "change #Circle .fill select": ( event, template ) -> Session.set "Circle_fill", event.val
+  "change #Circle .stroke select": ( event, template ) -> Session.set "Circle_stroke", event.val

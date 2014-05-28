@@ -19,8 +19,8 @@
       },
       "jquery-select2": {
         "git": "https://github.com/LumaPictures/meteor-jquery-select2",
-        "tag": "v0.1.11",
-        "commit": "345858207373494c3ba1197d5c4fb5937991086d"
+        "tag": "v0.1.12",
+        "commit": "a33712a67f64559a730a3a6b6e97310b2dd6a6d0"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",
@@ -34,8 +34,8 @@
       },
       "iron-router-progress": {
         "git": "https://github.com/Multiply/iron-router-progress.git",
-        "tag": "v0.3.1",
-        "commit": "3f7900feb4bb70a1289b39a1fdcd1f438c0335b3"
+        "tag": "v0.4.0",
+        "commit": "02f78bdaca4c13d59f548d5a0ce83408c34b56d1"
       },
       "jquery-ui": {
         "git": "https://github.com/TimHeckel/meteor-jquery-ui.git",

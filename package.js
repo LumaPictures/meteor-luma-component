@@ -17,7 +17,8 @@ Package.on_use(function (api, where) {
 
   api.add_files([
     'lib/mixins/Base.mixin.coffee',
-    'lib/mixins/ChooseTemplate.mixin.coffee'
+    'lib/mixins/ChooseTemplate.mixin.coffee',
+    'lib/mixins/ServerData.mixin.coffee'
   ], [ 'client', 'server' ]);
 
   api.add_files([
@@ -41,6 +42,10 @@ Package.on_test(function (api) {
     'templating',
     'spacebars'
   ], [ 'client' ]);
+
+  api.add_files([
+    'tests/fixtures/utility.fixture.coffee'
+  ], [ 'client', 'server' ]);
 
   api.add_files([
     'tests/fixtures/ComponentFixture.html'
