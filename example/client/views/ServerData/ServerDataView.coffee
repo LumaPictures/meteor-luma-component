@@ -23,7 +23,7 @@ Template.ServerDataView.helpers
 
 # ##### ServerDataView.events()
 Template.ServerDataView.events
-  "click .add-row": ( event, template ) -> insertRow()
+  "click .add-row": _.throttle( insertRow, 1000 )
 
   "change #subscription-limit": ( event, template ) -> Session.set "limit", parseInt event.val
 
@@ -32,5 +32,6 @@ Template.ServerDataView.events
       userAgent:
         $regex: event.target.value
         $options: 'i'
+    console.log "xxx", filter
     Session.set "filterQuery", filter
-  , 300
+  , 500

@@ -253,7 +253,7 @@ ComponentMixins.ServerData =
 
         # ##### subscribe()
         # Subscribes to the dataset for the current table state and stores the handle for later access.
-        subscribe: ( callback = null ) ->
+        subscribe: _.throttle ( callback = null ) ->
           @prepareSubscriptionHandle()
           queries =
             base: @query()
@@ -262,6 +262,7 @@ ComponentMixins.ServerData =
           @subscriptionHandle handle
           @log "subscription:handle", @subscriptionHandle()
           @setSubscriptionCallback callback
+        , 500
 
         isSubscriptionReady: ->
           if @subscriptionHandle and @subscriptionHandle().ready
@@ -302,73 +303,79 @@ ComponentMixins.ServerData =
 
         # ##### nextPage( Function )
         nextPage: ( callback ) ->
-          skip = @subscriptionOptions().skip
-          nextPage = skip + @subscriptionOptions().limit
-          unless nextPage >= @collectionCount "filtered"
-            @subscriptionOptions().skip = nextPage
-            @log "paginate:next", @currentPageNumber()
-            @subscribe callback
+          if @isSubscriptionReady()
+            skip = @subscriptionOptions().skip
+            nextPage = skip + @subscriptionOptions().limit
+            unless nextPage >= @collectionCount "filtered"
+              @subscriptionOptions().skip = nextPage
+              @log "paginate:next", @currentPageNumber()
+              @subscribe callback
 
         # ##### previousPage( Function )
         previousPage: ( callback ) ->
-          skip = @subscriptionOptions().skip
-          previousPage = skip - @subscriptionOptions().limit
-          unless previousPage < 0
-            @subscriptionOptions().skip = previousPage
-            @log "paginate:previous", @currentPageNumber()
-            @subscribe callback
+          if @isSubscriptionReady()
+            skip = @subscriptionOptions().skip
+            previousPage = skip - @subscriptionOptions().limit
+            unless previousPage < 0
+              @subscriptionOptions().skip = previousPage
+              @log "paginate:previous", @currentPageNumber()
+              @subscribe callback
 
         # ##### firstPage( Function )
         firstPage: ( callback ) ->
-          unless @subscriptionOptions().skip is 0
-            @subscriptionOptions().skip = 0
-            @log "paginate:first", @currentPageNumber()
-            @subscribe callback
+          if @isSubscriptionReady()
+            unless @subscriptionOptions().skip is 0
+              @subscriptionOptions().skip = 0
+              @log "paginate:first", @currentPageNumber()
+              @subscribe callback
 
         # ##### lastPage( Function )
         lastPage: ( callback ) ->
-          count = @collectionCount( "filtered" )
-          lastPage = count - @subscriptionOptions().limit
-          unless lastPage is @subscriptionOptions().skip
-            @subscriptionOptions().skip = lastPage
-            @log "paginate:last", @currentPageNumber()
-            @subscribe callback
+          if @isSubscriptionReady()
+            count = @collectionCount( "filtered" )
+            lastPage = count - @subscriptionOptions().limit
+            unless lastPage is @subscriptionOptions().skip
+              @subscriptionOptions().skip = lastPage
+              @log "paginate:last", @currentPageNumber()
+              @subscribe callback
 
         # ##### pageStart()
         pageStart: ->
-          nextPage = @subscriptionOptions().skip + 1
-          if nextPage > 0 and nextPage <= @pageEnd()
-            return nextPage
+          if @isSubscriptionReady()
+            nextPage = @subscriptionOptions().skip + 1
+            if nextPage > 0 and nextPage <= @pageEnd()
+              return nextPage
 
         # ##### pageEnd()
         pageEnd: ->
-          end = @subscriptionOptions().skip + @subscriptionOptions().limit
-          if end < @collectionCount "filtered"
-            return end
-          else return @collectionCount "filtered"
+          if @isSubscriptionReady()
+            end = @subscriptionOptions().skip + @subscriptionOptions().limit
+            if end < @collectionCount "filtered"
+              return end
+            else return @collectionCount "filtered"
 
         goToPage: ( page, callback ) ->
-          if _.isNumber page and _.isFunction callback
-            limit = @subscriptionOptions().limit
-            pageStart = ( page * limit ) - limit
-            if pageStart >= @collectionCount "filtered"
-              @subscriptionOptions().skip = pageStart
-              @log "paginate:page", page
-              @subscribe callback
-            else throw new Error "Page #{ page } is outside the pagination range for this dataset."
-
-
+          if @isSubscriptionReady()
+            if _.isNumber page and _.isFunction callback
+              limit = @subscriptionOptions().limit
+              pageStart = ( page * limit ) - limit
+              if pageStart >= @collectionCount "filtered"
+                @subscriptionOptions().skip = pageStart
+                @log "paginate:page", page
+                @subscribe callback
+              else throw new Error "Page #{ page } is outside the pagination range for this dataset."
 
         # ##### paginate( String or Number, Function )
         paginate: ( page, callback ) ->
-          if _.isFunction callback
-            if _.isString page
-              switch page
-                when "next" then @nextPage callback
-                when "previous" then @previousPage callback
-                when "first" then @firstPage callback
-                when "last" then @lastPage callback
-                else throw new Error "The paginate method currently only supports 'next' and 'previous' as pagination directions."
-            else if _.isNumber page
-              @goToPage page, callback
-            else throw new Error "The page argument must be a number or string."
+          if @isSubscriptionReady()
+            if _.isFunction callback
+              if _.isString page
+                switch page
+                  when "next" then @nextPage callback
+                  when "previous" then @previousPage callback
+                  when "first" then @firstPage callback
+                  when "last" then @lastPage callback
+                  else throw new Error "The paginate method currently only supports 'next' and 'previous' as pagination directions."
+              else if _.isNumber page
+                @goToPage page, callback
+              else throw new Error "The page argument must be a number or string."
