@@ -233,6 +233,7 @@ ComponentMixins.ServerData =
             @addGetterSetter "data", "subscriptionOptions"
 
         prepareSubscriptionHandle: ->
+          Session.set "#{ @id() }-subscriptionReady", false
           if @subscriptionHandle and @subscriptionHandle().stop
             @subscriptionHandle().stop()
           else
@@ -260,10 +261,10 @@ ComponentMixins.ServerData =
 
         isSubscriptionReady: ->
           if @subscriptionHandle and @subscriptionHandle().ready
-            @log 'subscription:handle:ready', @subscriptionHandle().ready()
             Session.set "#{ @id() }-subscriptionReady", @subscriptionHandle().ready()
           else
             Session.set "#{ @id() }-subscriptionReady", false
+          @log 'subscription:handle:ready', Session.get "#{ @id() }-subscriptionReady"
           return Session.get "#{ @id() }-subscriptionReady"
 
         # ##### setSubscriptionAutorun()
@@ -274,6 +275,6 @@ ComponentMixins.ServerData =
           @subscriptionAutorun Deps.autorun =>
             if @isSubscriptionReady()
               @prepareCursor()
-              @cursor @data.collection.find @filterQuery(), @subscriptionOptions()
+              @cursor @data.collection.find @filterQuery(), _.omit @subscriptionOptions(), "skip"
               callback @cursor()
           @log "subscriptionAutorun", @subscriptionAutorun()
