@@ -7,7 +7,6 @@ class @ServerDataComponent extends Component
     @prepareServerData context
 
   rendered: ->
-    console.log @collection()
     @subscribe @subscriptionCallback if Meteor.isClient
 
   subscriptionCallback: ( cursor ) ->
@@ -18,23 +17,23 @@ class @ServerDataComponent extends Component
   start: -> @subscriptionOptions().skip + 1
   end: -> @subscriptionOptions().skip + @subscriptionOptions().limit
   total: ->
-    console.log Component.collections
-    100
+    total = Component.collections[ @countCollection() ].findOne( @id() )
+    return total.count if total.count
 
   tempLog: ( object ) -> console.log "tempLog", object
 
   events:
     "click button.previous": ( event, template ) ->
       skip = template.subscriptionOptions().skip
-      unless skip is 0
-        previousPage = skip - template.subscriptionOptions().limit
+      previousPage = skip - template.subscriptionOptions().limit
+      unless previousPage < 0
         template.subscriptionOptions().skip = previousPage
         template.subscribe template.subscriptionCallback
 
     "click button.next": ( event, template ) ->
       skip = template.subscriptionOptions().skip
-      unless skip is -1
-        nextPage = skip + template.subscriptionOptions().limit
+      nextPage = skip + template.subscriptionOptions().limit
+      unless nextPage > template.total()
         template.subscriptionOptions().skip = nextPage
         template.subscribe template.subscriptionCallback
 
@@ -48,7 +47,7 @@ if Meteor.isServer
   RowsComponent = new ServerDataComponent
     subscription: "example"
     collection: Rows
-    debug: "added"
+    debug: "all"
     query: ( component ) -> return {}
 
   RowsComponent.publish()

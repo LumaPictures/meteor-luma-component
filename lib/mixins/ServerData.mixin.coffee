@@ -51,9 +51,11 @@ ComponentMixins.ServerData =
 
       # ##### prepareCollection()
       prepareCollection: ->
-        if Meteor.isClient
-          if @subscription
-            Component.collections[ "component_count" ] ?= new Meteor.Collection "component_count"
+        if @subscription
+          @data.countCollection = "component_count"
+          @addGetterSetter "data", "countCollection"
+          if Meteor.isClient
+            Component.collections[ @countCollection() ] ?= new Meteor.Collection @countCollection()
             collection = Component.getCollection @id()
             if collection instanceof Meteor.Collection
               @data.collection = collection
@@ -63,9 +65,9 @@ ComponentMixins.ServerData =
               Component.collections[ @id() ] = @data.collection
               @log "collection:created", @data.collection
             @addGetterSetter "data", "collection"
-        if Meteor.isServer
-          throw new Error "Collection property is not defined" unless @data.collection
-          @addGetterSetter "data", "collection"
+          if Meteor.isServer
+            throw new Error "Collection property is not defined" unless @data.collection
+            @addGetterSetter "data", "collection"
 
     if Meteor.isServer
       @include
@@ -95,7 +97,7 @@ ComponentMixins.ServerData =
         # ###### publishCount()
         preparePublishCount: ->
           unless @publishCount
-            @data.publishCount = false
+            @data.publishCount = true
             @addGetterSetter "data", "publishCount"
 
         # ###### preparePublicationArguments( String, Object, Object, Context )
@@ -140,9 +142,9 @@ ComponentMixins.ServerData =
           component = @
           # `initialized` is the initialization state of the subscriptions observe handle. Counts are only published after the observes are initialized.
           if publication.initialized and component.publishCount()
-            total = component.collection().find( component.baseQuery() ).count()
+            total = component.collection().find( component.query() ).count()
             component.log "#{ component.subscription() }:count:total", total
-            filtered = component.collection().find( component.filteredQuery() ).count()
+            filtered = component.collection().find( publication.queries.filtered ).count()
             component.log "#{ component.subscription() }:count:filtered", filtered
             # `added` is a flag that is set to true on the initial insert into the DaTableCount collection from this subscription.
             if added
