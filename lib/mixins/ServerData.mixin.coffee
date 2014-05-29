@@ -24,6 +24,15 @@
 ComponentMixins.ServerData =
   extended: ->
     @include
+      prepareServerData: ->
+        if Meteor.isClient
+          @prepareSubscription()
+          @prepareQuery()
+          @prepareCollection()
+          @prepareCursor()
+        if Meteor.isServer
+          @preparePublishCount()
+
       # ##### prepareSubscription()
       prepareSubscription: ->
         if Meteor.isClient and @subscription
@@ -53,7 +62,7 @@ ComponentMixins.ServerData =
               @log "collection:created", @data.collection
             @addGetterSetter "data", "collection"
         if Meteor.isServer
-          throw new Error "collection property is not defined" unless @data.collection
+          throw new Error "Collection property is not defined" unless @data.collection
           @addGetterSetter "data", "collection"
 
     if Meteor.isServer
@@ -105,8 +114,8 @@ ComponentMixins.ServerData =
           @log "#{ @subscription() }:publication:prepared", _.omit publication, "publicationContext"
           return publication
 
-        # ###### prepareCountHandle( Object )
-        prepareCountHandle: ( publication ) ->
+        # ###### createCountHandle( Object )
+        createCountHandle: ( publication ) ->
           component = @
           if publication.options.limit and component.publishCount()
             # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
@@ -141,11 +150,11 @@ ComponentMixins.ServerData =
               publication.context.changed( component.countCollection(), publication.collectionName, { count: total } )
               publication.context.changed( component.countCollection(), "#{ publication.collectionName }_filtered", { count: filtered } )
 
-        # ###### observer( Object )
+        # ###### createObserver( Object )
         # The component observes just the filtered and paginated subset of the Collection. This is for performance reasons as
         # observing large datasets entirely is unrealistic. The observe callbacks use `At` due to the sort and limit options
         # passed the the observer.
-        observer: ( publication ) ->
+        createObserver: ( publication ) ->
           component = @
           return component.collection().find( publication.queries.filtered, publication.options ).observe
 
@@ -154,6 +163,7 @@ ComponentMixins.ServerData =
             addedAt: ( doc, index, before ) ->
               component.updateCount publication
               publication.context.added publication.collectionName, doc._id, doc
+              publication.context.added component.collection()._name, doc._id, doc
               component.log "#{ component.subscription() }:added", doc._id
 
             # ###### changedAt( Object, Object, Number )
@@ -161,6 +171,7 @@ ComponentMixins.ServerData =
             changedAt: ( newDoc, oldDoc, index ) ->
               component.updateCount publication
               publication.context.changed publication.collectionName, newDoc._id, newDoc
+              publication.context.changed component.collection()._name, newDoc._id, newDoc
               component.log "#{ component.subscription() }:changed", newDoc._id
 
             # ###### removedAt( Object, Number )
@@ -168,6 +179,7 @@ ComponentMixins.ServerData =
             removedAt: ( doc, index ) ->
               component.updateCount publication
               publication.context.removed publication.collectionName, doc._id
+              publication.context.removed component.collection()._name, doc._id
               component.log "#{ component.subscription() }:removed", doc._id
 
         # ###### publish()
@@ -177,8 +189,7 @@ ComponentMixins.ServerData =
           # The publication this method provides is a paginated and filtered subset of the baseQuery defined during component instantiation on the server.
           # ###### Parameters
           #   + collectionName: ( String ) The client collection these documents are being added to.
-          #   + baseQuery: ( Object ) the initial query on the dataset.
-          #   + filteredQuery: ( Object ) the filter being applied by the client's current state.
+          #   + queries: ( Object ) the client queries on the dataset. Usually includes a base and filtered query.
           #   + options : ( Object ) sort and pagination options supplied by the client's current state.
           component = @
           Meteor.publish component.subscription(), ( collectionName, queries, options ) ->
@@ -187,12 +198,12 @@ ComponentMixins.ServerData =
 
             # After the observer is initialized the `initialized` flag is set to true, the initial count is published,
             # and the publication is marked as `ready()`
-            handle = component.observer publication
+            handle = component.createObserver publication
             publication.initialized = true
             component.updateCount publication, true
             context.ready()
 
-            countHandle = component.prepareCountHandle publication
+            countHandle = component.createCountHandle publication
 
             # When the publication is terminated the observers are stopped to prevent memory leaks.
             context.onStop ->
@@ -204,7 +215,7 @@ ComponentMixins.ServerData =
       @include
         prepareFilterQuery: ->
           unless @filterQuery
-            @data.filterQuery = undefined
+            @data.filterQuery = {}
             @addGetterSetter "data", "filterQuery"
 
         # ##### prepareCursor()
@@ -212,27 +223,14 @@ ComponentMixins.ServerData =
           unless @cursor
             @data.cursor = false
             @addGetterSetter "data", "cursor"
-          @prepareCursorOptions()
-
-        prepareCursorOptions: ->
-          unless @cursorOptions
-            @data.cursorOptions = {
-              skip: 0
-            }
-            @addGetterSetter "data", "cursorOptions"
 
         prepareSubscriptionOptions: ->
           unless @subscriptionOptions
             @data.subscriptionOptions =
               limit: 10
               skip: 0
+              sort: []
             @addGetterSetter "data", "subscriptionOptions"
-
-        prepareDataForCallback: ( map ) ->
-          data = @cursor().fetch()
-          if map isnt undefined
-            data.forEach map
-          return data
 
         prepareSubscriptionHandle: ->
           if @subscriptionHandle and @subscriptionHandle().stop
@@ -248,33 +246,34 @@ ComponentMixins.ServerData =
             @data.subscriptionAutorun = undefined
             @addGetterSetter "data", "subscriptionAutorun"
 
-        mapDocForSubscriptionCallback: ( doc ) -> return doc
-
-        # ##### setSubscriptionHandle()
+        # ##### subscribe()
         # Subscribes to the dataset for the current table state and stores the handle for later access.
-        setSubscriptionHandle: ->
+        subscribe: ( callback = null ) ->
           @prepareSubscriptionHandle()
           queries =
             base: @query()
             filtered: @filterQuery()
-          handle = Meteor.subscribe @subscription(), @collection()._name, queries, @subscriptionOptions()
+          handle = Meteor.subscribe @subscription(), @data.collection._name, queries, @subscriptionOptions()
           @subscriptionHandle handle
           @log "subscription:handle", @subscriptionHandle()
+          @setSubscriptionCallback callback if _.isFunction callback
 
         isSubscriptionReady: ->
           if @subscriptionHandle and @subscriptionHandle().ready
             @log 'subscription:handle:ready', @subscriptionHandle().ready()
-            return @subscriptionHandle().ready()
-          else return false
+            Session.set "#{ @id() }-subscriptionReady", @subscriptionHandle().ready()
+          else
+            Session.set "#{ @id() }-subscriptionReady", false
+          return Session.get "#{ @id() }-subscriptionReady"
 
         # ##### setSubscriptionAutorun()
         # Creates a reactive computation that runs when the subscription is `ready()` and sets up local cursor.
-        setSubscriptionAutorun: ( callback ) ->
+        setSubscriptionCallback: ( callback ) ->
           Match.test callback, Function
           @prepareSubscriptionAutorun()
           @subscriptionAutorun Deps.autorun =>
             if @isSubscriptionReady()
               @prepareCursor()
-              @cursor @collection().find @filterQuery(), @cursorOptions()
-              callback @prepareDataForCallback @mapDocForSubscriptionCallback
+              @cursor @data.collection.find @filterQuery(), @subscriptionOptions()
+              callback @cursor()
           @log "subscriptionAutorun", @subscriptionAutorun()

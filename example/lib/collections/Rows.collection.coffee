@@ -9,13 +9,14 @@ Rows.allow
   update: -> true
   remove: -> true
 
-@insertRow = ( i ) ->
+@insertRow = ->
   if Meteor.isServer
     navigator =
       platform: "NodeJS"
       language: "en-us"
   if Meteor.isClient
     navigator = _.pick window.navigator, "cookieEnabled", "language", "onLine", "platform", 'userAgent', "systemLanguage"
+    console.log "Row Added", navigator
   Rows.insert _.extend navigator, createdAt: new Date()
 
 @insertRows = ( howManyRows ) ->

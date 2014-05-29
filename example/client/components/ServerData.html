@@ -1,0 +1,40 @@
+<template name="ServerData">
+  {{#if self.isSubscriptionReady }}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>PLATFORM</th>
+        <th>USER AGENT</th>
+        <th>CREATED</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each self.rows }}
+        <tr>
+          <td>{{_id}}</td>
+          <td>{{platform}}</td>
+          <td>{{userAgent}}</td>
+          <td>{{createdAt}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <div class="row">
+    <div class="col-sm-2">
+      <h3 class="pull-right">Showing {{ self.start }}-{{ self.end }} of {{ self.total }}</h3>
+    </div>
+    <div class="col-sm-8"></div>
+    <div class="col-sm-2">
+      <div>
+        <button class="btn btn-success">Prev</button>
+        <button class="btn btn-success">Next</button>
+      </div>
+    </div>
+  </div>
+  {{else}}
+    <div class="row">
+      <h1>Loading...</h1>
+    </div>
+  {{/if}}
+</template>

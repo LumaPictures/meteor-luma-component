@@ -4,23 +4,22 @@ class @ServerDataComponent extends Component
 
   constructor: ( context = {} ) ->
     super
+    @prepareServerData()
+
+  rendered: ->
     if Meteor.isClient
-      @prepareSubscription()
-      @prepareQuery()
-      @prepareCollection()
-      @prepareCursor()
-      @prepareCursorOptions()
-      @setSubscriptionHandle()
-      @setSubscriptionAutorun ( data ) =>
-        console.log data
-        Session.set "rows", data
-    if Meteor.isServer
-      @preparePublishCount()
+      @subscribe @subscriptionCallback
+
+  subscriptionCallback: ( cursor ) ->
+    if Meteor.isClient
+      Session.set "rows", cursor.fetch()
 
   rows: -> Session.get "rows"
+  start: -> @subscriptionOptions().skip + 1
+  end: -> @subscriptionOptions().skip + @subscriptionOptions().limit
+  total: -> 100
 
-  tempLog: ( object ) ->
-    console.log "tempLog", object
+  tempLog: ( object ) -> console.log "tempLog", object
 
 
 if Meteor.isClient
