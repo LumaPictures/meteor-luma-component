@@ -7,24 +7,25 @@ class @ServerDataComponent extends Component
     @prepareServerData context
 
   rendered: ->
-    @subscribe @subscriptionCallback if Meteor.isClient
+    if Meteor.isClient
+      @subscribe @exampleSubscriptionCallback
 
-  subscriptionCallback: ( cursor ) ->
+  exampleSubscriptionCallback: ( cursor ) ->
     if Meteor.isClient
       Session.set "rows", cursor.fetch().reverse()
 
   rows: -> Session.get "rows"
 
-  tempLog: ( object ) -> console.log "tempLog", object
+  tempLog: ( object ) -> @log "tempLog", object
 
   events:
-    "click button.previous": ( event, template ) -> template.paginate "previous", template.subscriptionCallback
+    "click button.previous": ( event, template ) -> template.paginate "previous", template.exampleSubscriptionCallback
 
-    "click button.next": ( event, template ) -> template.paginate "next", template.subscriptionCallback
+    "click button.next": ( event, template ) -> template.paginate "next", template.exampleSubscriptionCallback
 
-    "click button.first": ( event, template ) -> template.paginate "first", template.subscriptionCallback
+    "click button.first": ( event, template ) -> template.paginate "first", template.exampleSubscriptionCallback
 
-    "click button.last": ( event, template ) -> template.paginate "last", template.subscriptionCallback
+    "click button.last": ( event, template ) -> template.paginate "last", template.exampleSubscriptionCallback
 
 
 if Meteor.isClient
