@@ -261,7 +261,7 @@ ComponentMixins.ServerData =
           handle = Meteor.subscribe @subscription(), @collection()._name, queries, @subscriptionOptions()
           @subscriptionHandle handle
           @log "subscription:handle", @subscriptionHandle()
-          @setSubscriptionCallback callback if _.isFunction callback
+          @setSubscriptionCallback callback
 
         isSubscriptionReady: ->
           if @subscriptionHandle and @subscriptionHandle().ready
@@ -274,11 +274,62 @@ ComponentMixins.ServerData =
         # ##### setSubscriptionAutorun()
         # Creates a reactive computation that runs when the subscription is `ready()` and sets up local cursor.
         setSubscriptionCallback: ( callback ) ->
-          Match.test callback, Function
-          @prepareSubscriptionAutorun()
-          @subscriptionAutorun Deps.autorun =>
-            if @isSubscriptionReady()
-              @prepareCursor()
-              @cursor @collection().find @filterQuery(), _.omit @subscriptionOptions(), "skip"
-              callback @cursor()
-          @log "subscriptionAutorun", @subscriptionAutorun()
+          if _.isFunction callback
+            @prepareSubscriptionAutorun()
+            @subscriptionAutorun Deps.autorun =>
+              if @isSubscriptionReady()
+                @prepareCursor()
+                @cursor @collection().find @filterQuery(), _.omit @subscriptionOptions(), "skip"
+                callback @cursor()
+            @log "subscriptionAutorun", @subscriptionAutorun()
+          else throw new Error "Subscription callback must the a function."
+
+        # ##### collectionCount( String )
+        collectionCount: ( suffix = null ) ->
+          id = if suffix then "#{ @id() }_#{ suffix }" else @id()
+          total = Component.collections[ @countCollection() ].findOne( id )
+          count = if total and total.count then total.count else "loading"
+          return count
+
+        nextPage: ( callback ) ->
+          skip = @subscriptionOptions().skip
+          nextPage = skip + @subscriptionOptions().limit
+          unless nextPage > @collectionCount "filtered"
+            @subscriptionOptions().skip = nextPage
+            @subscribe @subscriptionCallback
+
+        previousPage: ( callback ) ->
+          skip = @subscriptionOptions().skip
+          previousPage = skip - @subscriptionOptions().limit
+          unless previousPage < 0
+            @subscriptionOptions().skip = previousPage
+            @subscribe callback
+
+        firstPage: ( callback ) ->
+          @subscriptionOptions().skip = 0
+          @subscribe callback
+
+        lastPage: ( callback ) ->
+          lastPage = @collectionCount( "filtered" ) - @subscriptionOptions().limit
+          @subscriptionOptions().skip = lastPage
+          @subscribe callback
+
+        pageStart: ->
+          nextPage = @subscriptionOptions().skip + 1
+          if nextPage > 0 and nextPage <= @pageEnd()
+            return nextPage
+
+        pageEnd: ->
+          end = @subscriptionOptions().skip + @subscriptionOptions().limit
+          if end < @collectionCount "filtered"
+            return end
+          else return @collectionCount "filtered"
+
+        paginate: ( page, callback ) ->
+          if _.isFunction callback
+            switch page
+              when "next" then @nextPage callback
+              when "previous" then @previousPage callback
+              when "first" then @firstPage callback
+              when "last" then @lastPage callback
+              else throw new Error "The paginate method currently only supports 'next' and 'previous' as page values."

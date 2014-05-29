@@ -1,5 +1,5 @@
 <template name="ServerData">
-  <table class="table table-striped">
+  <table class="table table-striped" styles="min-height: 200px;">
     <thead>
       <tr>
         <th>ID</th>
@@ -9,7 +9,6 @@
       </tr>
     </thead>
     <tbody>
-    {{#if self.isSubscriptionReady }}
       {{#each self.rows }}
         <tr>
           <td>{{_id}}</td>
@@ -18,23 +17,20 @@
           <td>{{createdAt}}</td>
         </tr>
       {{/each}}
-    {{else}}
-      <tr><td colspan="4"><h1>Loading...</h1></td></tr>
-    {{/if}}
     </tbody>
   </table>
-  {{#if self.isSubscriptionReady }}
   <div class="row">
-    <div class="col-sm-2">
-      <h3 class="pull-right">Showing {{ self.start }}-{{ self.end }} of {{ self.total }}</h3>
+    <div class="col-sm-4">
+      <h4 class="pull-right">Showing {{ self.pageStart }}-{{ self.pageEnd }} of {{ self.collectionCount "filtered" }} ( filtered from {{ self.collectionCount }} )</h4>
     </div>
-    <div class="col-sm-8"></div>
-    <div class="col-sm-2">
+    <div class="col-sm-5"></div>
+    <div class="col-sm-3">
       <div>
+        <button class="btn btn-success first">First</button>
         <button class="btn btn-success previous">Prev</button>
         <button class="btn btn-success next">Next</button>
+        <button class="btn btn-success last">Last</button>
       </div>
     </div>
   </div>
-  {{/if}}
 </template>

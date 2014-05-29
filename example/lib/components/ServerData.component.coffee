@@ -14,28 +14,17 @@ class @ServerDataComponent extends Component
       Session.set "rows", cursor.fetch().reverse()
 
   rows: -> Session.get "rows"
-  start: -> @subscriptionOptions().skip + 1
-  end: -> @subscriptionOptions().skip + @subscriptionOptions().limit
-  total: ->
-    total = Component.collections[ @countCollection() ].findOne( @id() )
-    return total.count if total.count
 
   tempLog: ( object ) -> console.log "tempLog", object
 
   events:
-    "click button.previous": ( event, template ) ->
-      skip = template.subscriptionOptions().skip
-      previousPage = skip - template.subscriptionOptions().limit
-      unless previousPage < 0
-        template.subscriptionOptions().skip = previousPage
-        template.subscribe template.subscriptionCallback
+    "click button.previous": ( event, template ) -> template.paginate "previous", template.subscriptionCallback
 
-    "click button.next": ( event, template ) ->
-      skip = template.subscriptionOptions().skip
-      nextPage = skip + template.subscriptionOptions().limit
-      unless nextPage > template.total()
-        template.subscriptionOptions().skip = nextPage
-        template.subscribe template.subscriptionCallback
+    "click button.next": ( event, template ) -> template.paginate "next", template.subscriptionCallback
+
+    "click button.first": ( event, template ) -> template.paginate "first", template.subscriptionCallback
+
+    "click button.last": ( event, template ) -> template.paginate "last", template.subscriptionCallback
 
 
 if Meteor.isClient
