@@ -24,14 +24,16 @@
 ComponentMixins.ServerData =
   extended: ->
     @include
-      prepareServerData: ->
+      prepareServerData: ( context = {} ) ->
+        @prepareSubscription()
+        @prepareQuery()
+        @prepareCollection()
         if Meteor.isClient
-          @prepareSubscription()
-          @prepareQuery()
-          @prepareCollection()
           @prepareCursor()
         if Meteor.isServer
           @preparePublishCount()
+        @extendComponent context, true
+
 
       # ##### prepareSubscription()
       prepareSubscription: ->
@@ -51,14 +53,14 @@ ComponentMixins.ServerData =
       prepareCollection: ->
         if Meteor.isClient
           if @subscription
+            Component.collections[ "component_count" ] ?= new Meteor.Collection "component_count"
             collection = Component.getCollection @id()
-            @log "collection", collection
-            if collection
+            if collection instanceof Meteor.Collection
               @data.collection = collection
               @log "collection:exists", collection
             else
               @data.collection = new Meteor.Collection @id()
-              Component.collections.push @data.collection
+              Component.collections[ @id() ] = @data.collection
               @log "collection:created", @data.collection
             @addGetterSetter "data", "collection"
         if Meteor.isServer
@@ -254,7 +256,7 @@ ComponentMixins.ServerData =
           queries =
             base: @query()
             filtered: @filterQuery()
-          handle = Meteor.subscribe @subscription(), @data.collection._name, queries, @subscriptionOptions()
+          handle = Meteor.subscribe @subscription(), @collection()._name, queries, @subscriptionOptions()
           @subscriptionHandle handle
           @log "subscription:handle", @subscriptionHandle()
           @setSubscriptionCallback callback if _.isFunction callback
@@ -275,6 +277,6 @@ ComponentMixins.ServerData =
           @subscriptionAutorun Deps.autorun =>
             if @isSubscriptionReady()
               @prepareCursor()
-              @cursor @data.collection.find @filterQuery(), _.omit @subscriptionOptions(), "skip"
+              @cursor @collection().find @filterQuery(), _.omit @subscriptionOptions(), "skip"
               callback @cursor()
           @log "subscriptionAutorun", @subscriptionAutorun()

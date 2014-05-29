@@ -4,11 +4,11 @@ class @ServerDataComponent extends Component
 
   constructor: ( context = {} ) ->
     super
-    @prepareServerData()
+    @prepareServerData context
 
   rendered: ->
-    if Meteor.isClient
-      @subscribe @subscriptionCallback
+    console.log @collection()
+    @subscribe @subscriptionCallback if Meteor.isClient
 
   subscriptionCallback: ( cursor ) ->
     if Meteor.isClient
@@ -17,7 +17,9 @@ class @ServerDataComponent extends Component
   rows: -> Session.get "rows"
   start: -> @subscriptionOptions().skip + 1
   end: -> @subscriptionOptions().skip + @subscriptionOptions().limit
-  total: -> 100
+  total: ->
+    console.log Component.collections
+    100
 
   tempLog: ( object ) -> console.log "tempLog", object
 

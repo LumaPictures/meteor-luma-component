@@ -17,7 +17,7 @@ class Component
     # Add getter setter methods for everything in the component data context.
     @addGetterSetter( 'data', attr ) for attr of @data if @data
     @prepareOptions()
-    @prepareComponentContext context
+    @extendComponent context
 
   # ##### prepareDataContext( Object )
   prepareDataContext: ( context ) ->
@@ -67,8 +67,8 @@ class Component
     if @options and @defaults
       @options _.defaults @options(), @defaults()
 
-  # ##### prepareComponentContext( Object )
-  prepareComponentContext: ( context ) ->
+  # ##### extendComponent( Object )
+  extendComponent: ( context, alreadyExtended = false ) ->
     if Meteor.isClient
       templateInstance = context
       if templateInstance.__component__
@@ -82,7 +82,8 @@ class Component
     if Meteor.isServer
       # On the server this is just a standard class
       self = @
-    @log "created", self
+    unless alreadyExtended
+      @log "created", self
 
   # ##### rendered()
   rendered: ->
@@ -206,17 +207,14 @@ class Component
 
   # ##### collections [ Array ]
   # An array to track the collections initialized by components to prevent duplicate collection errors.
-  @collections: [
-    component_count: if Meteor.isClient then new Meteor.Collection "component_count" else "component_count"
-  ]
+  @collections: []
 
   # ##### Component.getCollection( String )
   # Checks to see if a colletion already exists and returns the collection
   @getCollection: ( string ) ->
     for id, collection of Component.collections
-      if collection instanceof Meteor.Collection
-        if collection._name is string
-          return collection
-          break
+      if id is string and collection instanceof Meteor.Collection
+        return collection
+        break
     # if none of the collections match
-    return undefined
+    return false
