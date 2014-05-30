@@ -38,7 +38,9 @@ ComponentMixins.ServerData =
       # ##### prepareSubscription()
       prepareSubscription: ->
         if Meteor.isClient and @subscription
-          @prepareSubscriptionOptions()
+          @prepareLimit()
+          @prepareSkip()
+          @prepareSort()
 
       # ##### prepareQuery()
       prepareQuery: ->
@@ -46,8 +48,13 @@ ComponentMixins.ServerData =
           unless @query
             @data.query = {}
             @addGetterSetter "data", "query"
-          if Meteor.isClient
-            @prepareFilterQuery()
+
+      # ##### prepareFilter()
+      prepareQuery: ->
+        if @subscription or Meteor.isServer
+          unless @filter
+            @data.filter = {}
+            @addGetterSetter "data", "filter"
 
       # ##### prepareCollection()
       prepareCollection: ->
@@ -78,16 +85,16 @@ ComponentMixins.ServerData =
             query = queryMethod @
           else query = @query()
 
-          # The baseQuery is an and of the client and server queries, to prevent the client from accessing the entire collection
-          publication.queries.base =
+          publication.query =
             $and: [
               query
-              publication.queries.base
+              publication.query
             ]
-          publication.queries.filtered =
+
+          publication.filter =
             $and: [
-              query
-              publication.queries.filtered
+              publication.query
+              publication.filter
             ]
           return publication
 
@@ -100,17 +107,19 @@ ComponentMixins.ServerData =
             @data.publishCount = true
             @addGetterSetter "data", "publishCount"
 
-        # ###### preparePublicationArguments( String, Object, Object, Context )
-        preparePublicationArguments: ( collectionName, queries, options, context ) ->
+        # ###### preparePublicationArguments( String, Object, Object, Object, Context )
+        preparePublicationArguments: ( collectionName, query, filter, options, context ) ->
           Match.test collectionName, String
-          Match.test queries, Object
+          Match.test query, Object
+          Match.test filter, Object
           Match.test options, Object
           Match.test context, Object
           publication =
             context: context
             initialized: false
             collectionName: collectionName
-            queries: queries
+            query: query
+            filter: filter
             options: options
           @log "#{ @subscription() }:publication:raw", _.omit publication, "publicationContext"
           publication = @preparePublicationOptions publication
@@ -124,12 +133,12 @@ ComponentMixins.ServerData =
           if publication.options.limit and component.publishCount()
             # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
             # breaking when the last page no longer contains any data, or is no longer the last page.
-            lastPage = component.collection().find( publication.queries.filtered ).count() - publication.options.limit
+            lastPage = component.collection().find( publication.filter ).count() - publication.options.limit
             if lastPage > 0
               countPublication = _.clone publication
               countPublication.initialized = false
               countPublication.options.skip = lastPage
-              countHandle = component.collection().find( countPublication.queries.filtered, countPublication.options ).observe
+              countHandle = component.collection().find( countPublication.filter, countPublication.options ).observe
                 addedAt: -> component.updateCount countPublication
                 changedAt: -> component.updateCount countPublication
                 removedAt: -> component.updateCount countPublication
@@ -142,9 +151,9 @@ ComponentMixins.ServerData =
           component = @
           # `initialized` is the initialization state of the subscriptions observe handle. Counts are only published after the observes are initialized.
           if publication.initialized and component.publishCount()
-            total = component.collection().find( component.query() ).count()
+            total = component.collection().find( publication.query ).count()
             component.log "#{ component.subscription() }:count:total", total
-            filtered = component.collection().find( publication.queries.filtered ).count()
+            filtered = component.collection().find( publication.filter ).count()
             component.log "#{ component.subscription() }:count:filtered", filtered
             # `added` is a flag that is set to true on the initial insert into the DaTableCount collection from this subscription.
             if added
@@ -160,7 +169,7 @@ ComponentMixins.ServerData =
         # passed the the observer.
         createObserver: ( publication ) ->
           component = @
-          return component.collection().find( publication.queries.filtered, publication.options ).observe
+          return component.collection().find( publication.filter, publication.options ).observe
 
             # ###### addedAt( Object, Number, Number )
             # Updates the count and sends the new doc to the client.
@@ -196,9 +205,9 @@ ComponentMixins.ServerData =
           #   + queries: ( Object ) the client queries on the dataset. Usually includes a base and filtered query.
           #   + options : ( Object ) sort and pagination options supplied by the client's current state.
           component = @
-          Meteor.publish component.subscription(), ( collectionName, queries, options ) ->
+          Meteor.publish component.subscription(), ( collectionName, query, filter, options ) ->
             context = @
-            publication = component.preparePublicationArguments collectionName, queries, options, context
+            publication = component.preparePublicationArguments collectionName, query, filter, options, context
 
             # After the observer is initialized the `initialized` flag is set to true, the initial count is published,
             # and the publication is marked as `ready()`
@@ -217,56 +226,56 @@ ComponentMixins.ServerData =
 
     if Meteor.isClient
       @include
-        prepareFilterQuery: ->
-          unless @filterQuery
-            @data.filterQuery = {}
-            @addGetterSetter "data", "filterQuery"
-
         # ##### prepareCursor()
         prepareCursor: ->
           unless @cursor
-            @data.cursor = false
-            @addGetterSetter "data", "cursor"
+            @cursor = undefined
 
-        prepareSubscriptionOptions: ->
-          unless @subscriptionOptions
-            @data.subscriptionOptions =
-              limit: 10
-              skip: 0
-              sort: []
-            @addGetterSetter "data", "subscriptionOptions"
+        # ##### prepareLimit()
+        prepareLimit: ->
+          unless @limit
+            @data.limit = 10
+            @addGetterSetter "data", "limit"
 
-        prepareSubscriptionHandle: ->
+        # ##### prepareSkip()
+        prepareSkip: ->
+          unless @skip
+            @data.skip = 0
+            @addGetterSetter "data", "skip"
+
+        # ##### prepareSort()
+        prepareSort: ->
+          unless @sort
+            @data.sort = []
+            @addGetterSetter "data", "sort"
+
+        # ##### resetSubscription()
+        resetSubscription: ->
           Session.set "#{ @id() }-subscriptionReady", false
-          if @subscriptionHandle and @subscriptionHandle().stop
-            @subscriptionHandle().stop()
-          else
-            @data.subscriptionHandle = false
-            @addGetterSetter "data", "subscriptionHandle"
+          if @subscriptionHandle and @subscriptionHandle.stop
+            @subscriptionHandle.stop()
 
-        prepareSubscriptionAutorun: ->
-          if @subscriptionAutorun and @subscriptionAutorun().stop
-            @subscriptionAutorun().stop()
-          else
-            @data.subscriptionAutorun = undefined
-            @addGetterSetter "data", "subscriptionAutorun"
+        # ##### resetSubscriptionAutorun()
+        resetSubscriptionAutorun: ->
+          if @subscriptionAutorun and @subscriptionAutorun.stop
+            @subscriptionAutorun.stop()
 
-        # ##### subscribe()
+        # ##### subscribe( Function )
         # Subscribes to the dataset for the current table state and stores the handle for later access.
-        subscribe: _.throttle ( callback = null ) ->
-          @prepareSubscriptionHandle()
-          queries =
-            base: @query()
-            filtered: @filterQuery()
-          handle = Meteor.subscribe @subscription(), @collection()._name, queries, @subscriptionOptions()
-          @subscriptionHandle handle
-          @log "subscription:handle", @subscriptionHandle()
+        subscribe: ( callback = null ) ->
+          @resetSubscription()
+          options =
+            skip: @skip()
+            limit: @limit()
+            sort: @sort()
+          @subscriptionHandle = Meteor.subscribe @subscription(), @id(), @query(), @filter(), options
+          @log "subscription:handle", @subscriptionHandle
           @setSubscriptionCallback callback
-        , 500
 
+        # ##### isSubscriptionReady()
         isSubscriptionReady: ->
-          if @subscriptionHandle and @subscriptionHandle().ready
-            Session.set "#{ @id() }-subscriptionReady", @subscriptionHandle().ready()
+          if @subscriptionHandle and @subscriptionHandle.ready
+            Session.set "#{ @id() }-subscriptionReady", @subscriptionHandle.ready()
           else
             Session.set "#{ @id() }-subscriptionReady", false
           @log 'subscription:handle:ready', Session.get "#{ @id() }-subscriptionReady"
@@ -276,13 +285,20 @@ ComponentMixins.ServerData =
         # Creates a reactive computation that runs when the subscription is `ready()` and sets up local cursor.
         setSubscriptionCallback: ( callback ) ->
           if _.isFunction callback
-            @prepareSubscriptionAutorun()
-            @subscriptionAutorun Deps.autorun =>
+            @resetSubscriptionAutorun()
+            @subscriptionAutorun = Deps.autorun =>
               if @isSubscriptionReady()
-                @prepareCursor()
-                @cursor @collection().find @filterQuery(), _.omit @subscriptionOptions(), "skip"
-                callback @cursor()
-            @log "subscriptionAutorun", @subscriptionAutorun()
+                options =
+                  limit: @limit()
+                  sort: @sort()
+                query =
+                  $and: [
+                    @query()
+                    @filter()
+                  ]
+                @cursor = @collection().find query, options
+                callback @cursor
+            @log "subscriptionAutorun", @subscriptionAutorun
           else throw new Error "Subscription callback must the a function."
 
         # ##### collectionCount( String )
@@ -295,8 +311,8 @@ ComponentMixins.ServerData =
         # ##### currentPageNumber()
         currentPageNumber: ->
           if @isSubscriptionReady()
-            currentPageNumber = Math.floor( @subscriptionOptions().skip / @subscriptionOptions().limit ) + 1
-            lastPageNumber = Math.floor( @collectionCount "filtered" / @subscriptionOptions().limit ) + 1
+            currentPageNumber = Math.floor( @skip() / @limit() ) + 1
+            lastPageNumber = Math.floor( @collectionCount "filtered" / @limit() ) + 1
             if currentPageNumber > 0 and currentPageNumber <= lastPageNumber
               return currentPageNumber
             else throw new Error "The current page #{ currentPageNumber } is outside the pagination range for this data set."
@@ -304,28 +320,26 @@ ComponentMixins.ServerData =
         # ##### nextPage( Function )
         nextPage: ( callback ) ->
           if @isSubscriptionReady()
-            skip = @subscriptionOptions().skip
-            nextPage = skip + @subscriptionOptions().limit
+            nextPage = @skip() + @limit()
             unless nextPage >= @collectionCount "filtered"
-              @subscriptionOptions().skip = nextPage
+              @skip nextPage
               @log "paginate:next", @currentPageNumber()
               @subscribe callback
 
         # ##### previousPage( Function )
         previousPage: ( callback ) ->
           if @isSubscriptionReady()
-            skip = @subscriptionOptions().skip
-            previousPage = skip - @subscriptionOptions().limit
+            previousPage = @skip() - @limit()
             unless previousPage < 0
-              @subscriptionOptions().skip = previousPage
+              @skip previousPage
               @log "paginate:previous", @currentPageNumber()
               @subscribe callback
 
         # ##### firstPage( Function )
         firstPage: ( callback ) ->
           if @isSubscriptionReady()
-            unless @subscriptionOptions().skip is 0
-              @subscriptionOptions().skip = 0
+            unless @skip() is 0
+              @skip 0
               @log "paginate:first", @currentPageNumber()
               @subscribe callback
 
@@ -333,34 +347,34 @@ ComponentMixins.ServerData =
         lastPage: ( callback ) ->
           if @isSubscriptionReady()
             count = @collectionCount( "filtered" )
-            lastPage = count - @subscriptionOptions().limit
-            unless lastPage is @subscriptionOptions().skip
-              @subscriptionOptions().skip = lastPage
+            lastPage = count - @limit()
+            unless lastPage is @skip()
+              @skip lastPage
               @log "paginate:last", @currentPageNumber()
               @subscribe callback
 
         # ##### pageStart()
         pageStart: ->
           if @isSubscriptionReady()
-            nextPage = @subscriptionOptions().skip + 1
-            if nextPage > 0 and nextPage <= @pageEnd()
-              return nextPage
+            firstDoc = @skip() + 1
+            if firstDoc > 0 and firstDoc <= @pageEnd()
+              return firstDoc
 
         # ##### pageEnd()
         pageEnd: ->
           if @isSubscriptionReady()
-            end = @subscriptionOptions().skip + @subscriptionOptions().limit
+            end = @skip() + @limit()
             if end < @collectionCount "filtered"
               return end
             else return @collectionCount "filtered"
 
+        # ##### gotToPage( Number, Function )
         goToPage: ( page, callback ) ->
           if @isSubscriptionReady()
             if _.isNumber page and _.isFunction callback
-              limit = @subscriptionOptions().limit
-              pageStart = ( page * limit ) - limit
+              pageStart = ( page * @limit() ) - @limit()
               if pageStart >= @collectionCount "filtered"
-                @subscriptionOptions().skip = pageStart
+                @skip pageStart
                 @log "paginate:page", page
                 @subscribe callback
               else throw new Error "Page #{ page } is outside the pagination range for this dataset."

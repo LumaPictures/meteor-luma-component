@@ -8,18 +8,14 @@ Template.ServerDataView.created = ->
   sort.push [ 'createdAt', -1 ]
   Session.set "sort", sort
   Session.set "query", {}
-  Session.set "filterQuery", {}
+  Session.set "filter", { platform: "Linux x86_64"}
 
 # ##### ServerDataView.helpers()
 Template.ServerDataView.helpers
   query: -> return Session.get "query"
-  filterQuery: -> return Session.get "filterQuery"
+  filter: -> return Session.get "filter"
   limit: -> return Session.get "limit"
-  subscriptionOptions: -> return {
-    limit: Session.get "limit"
-    skip: Session.get "skip"
-    sort: Session.get "sort"
-  }
+  sort: -> return Session.get "sort"
 
 # ##### ServerDataView.events()
 Template.ServerDataView.events
@@ -33,5 +29,5 @@ Template.ServerDataView.events
         $regex: event.target.value
         $options: 'i'
     console.log "xxx", filter
-    Session.set "filterQuery", filter
+    Session.set "filter", filter
   , 500
