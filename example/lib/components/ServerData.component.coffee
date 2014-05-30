@@ -9,6 +9,7 @@ class @ServerDataComponent extends Component
   rendered: ->
     if Meteor.isClient
       @subscribe @exampleSubscriptionCallback
+    super
 
   exampleSubscriptionCallback: ( cursor ) =>
     if Meteor.isClient
@@ -17,8 +18,6 @@ class @ServerDataComponent extends Component
       @log "subscription:callback:rows", rows
 
   rows: -> Session.get "rows"
-
-  tempLog: ( object ) -> @log "tempLog", object
 
   events:
     "click button.previous": ( event, template ) -> template.paginate "previous", template.exampleSubscriptionCallback
@@ -32,6 +31,7 @@ class @ServerDataComponent extends Component
 
 if Meteor.isClient
   Template.ServerData.created = -> new ServerDataComponent @
+  Template.ServerData.log = -> console.log @
 
 if Meteor.isServer
   # Reactive Data Source

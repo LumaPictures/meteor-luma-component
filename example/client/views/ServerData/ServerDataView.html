@@ -22,10 +22,12 @@
         {{> ServerData
           subscription="example"
           query=query
-          filter=filter
-          limit=limit
-          sort=sort
-          debug="all"
+          debug="rendered"
+        }}
+        {{> ServerData
+          subscription="example2"
+          query=query
+          debug="rendered"
         }}
       </div>
     {{/panelBody}}

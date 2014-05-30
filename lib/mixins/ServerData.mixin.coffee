@@ -28,10 +28,6 @@ ComponentMixins.ServerData =
         @prepareSubscription()
         @prepareQuery()
         @prepareCollection()
-        if Meteor.isClient
-          @prepareCursor()
-        if Meteor.isServer
-          @preparePublishCount()
         @extendComponent context, true
 
 
@@ -95,12 +91,6 @@ ComponentMixins.ServerData =
         # ##### preparePublicationOptions( Object )
         preparePublicationOptions: ( publication ) -> return publication
 
-        # ###### publishCount()
-        preparePublishCount: ->
-          unless @publishCount
-            @data.publishCount = true
-            @addGetterSetter "data", "publishCount"
-
         # ###### preparePublicationArguments( String, Object, Object, Object, Context )
         preparePublicationArguments: ( collectionName, query, filter, options, context ) ->
           Match.test collectionName, String
@@ -115,16 +105,16 @@ ComponentMixins.ServerData =
             query: query
             filter: filter
             options: options
-          @log "#{ @subscription() }:publication:raw", _.omit publication, "publicationContext"
+          @log "#{ @subscription() }:publication:raw", _.omit publication, "context"
           publication = @preparePublicationOptions publication
           publication = @preparePublicationQueries publication
-          @log "#{ @subscription() }:publication:prepared", _.omit publication, "publicationContext"
+          @log "#{ @subscription() }:publication:prepared", _.omit publication, "context"
           return publication
 
         # ###### createCountHandle( Object )
         createCountHandle: ( publication ) ->
           component = @
-          if publication.options.limit and component.publishCount()
+          if publication.options.limit
             # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
             # breaking when the last page no longer contains any data, or is no longer the last page.
             lastPage = component.collection.find( publication.filter ).count() - publication.options.limit
@@ -144,7 +134,7 @@ ComponentMixins.ServerData =
         updateCount: ( publication, added = false ) ->
           component = @
           # `initialized` is the initialization state of the subscriptions observe handle. Counts are only published after the observes are initialized.
-          if publication.initialized and component.publishCount()
+          if publication.initialized
             total = component.collection.find( publication.query ).count()
             component.log "#{ component.subscription() }:count:total", total
             filtered = component.collection.find( publication.filter ).count()
@@ -220,11 +210,6 @@ ComponentMixins.ServerData =
 
     if Meteor.isClient
       @include
-        # ##### prepareCursor()
-        prepareCursor: ->
-          unless @cursor
-            @cursor = undefined
-
         # ##### prepareLimit()
         prepareLimit: ->
           unless @limit
@@ -243,14 +228,14 @@ ComponentMixins.ServerData =
             @data.sort = []
             @addGetterSetter "data", "sort"
 
-        # ##### resetSubscription()
-        resetSubscription: ->
+        # ##### stopSubscription()
+        stopSubscription: ->
           Session.set "#{ @id() }-subscriptionReady", false
           if @subscriptionHandle and @subscriptionHandle.stop
             @subscriptionHandle.stop()
 
-        # ##### resetSubscriptionAutorun()
-        resetSubscriptionAutorun: ->
+        # ##### stopSubscriptionAutorun()
+        stopSubscriptionAutorun: ->
           if @subscriptionAutorun and @subscriptionAutorun.stop
             @subscriptionAutorun.stop()
             @log "subscription:autorun:stopped", @subscriptionAutorun
@@ -258,14 +243,16 @@ ComponentMixins.ServerData =
         # ##### subscribe( Function )
         # Subscribes to the dataset for the current table state and stores the handle for later access.
         subscribe: ( callback = null ) ->
-          @resetSubscription()
+          @log "subscription", callback
+          @stopSubscription()
           options =
             skip: @skip()
             limit: @limit()
             sort: @sort()
           @subscriptionHandle = Meteor.subscribe @subscription(), @id(), @query(), @filter(), options
           @log "subscription:handle", @subscriptionHandle
-          @setSubscriptionCallback callback
+          if callback
+            @setSubscriptionCallback callback
 
         # ##### isSubscriptionReady()
         isSubscriptionReady: ->
@@ -279,7 +266,7 @@ ComponentMixins.ServerData =
         # Creates a reactive computation that runs when the subscription is `ready()` and sets up local cursor.
         setSubscriptionCallback: ( callback ) ->
           if _.isFunction callback
-            @resetSubscriptionAutorun()
+            @stopSubscriptionAutorun()
             @subscriptionAutorun = Deps.autorun =>
               if @isSubscriptionReady()
                 options =
@@ -290,10 +277,9 @@ ComponentMixins.ServerData =
                     @query()
                     @filter()
                   ]
-                @cursor = @collection.find query, options
-                callback @cursor
+                cursor = @collection.find query, options
+                callback cursor
             @log "subscription:autorun:set", @subscriptionAutorun
-          else throw new Error "Subscription callback must the a function."
 
         # ##### collectionCount( String )
         collectionCount: ( suffix = null ) ->

@@ -28,6 +28,6 @@ Template.ServerDataView.events
       userAgent:
         $regex: event.target.value
         $options: 'i'
-    console.log "xxx", filter
+    console.log "filter", filter
     Session.set "filter", filter
   , 500
