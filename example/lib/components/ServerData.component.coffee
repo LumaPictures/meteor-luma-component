@@ -10,9 +10,11 @@ class @ServerDataComponent extends Component
     if Meteor.isClient
       @subscribe @exampleSubscriptionCallback
 
-  exampleSubscriptionCallback: ( cursor ) ->
+  exampleSubscriptionCallback: ( cursor ) =>
     if Meteor.isClient
-      Session.set "rows", cursor.fetch().reverse()
+      rows = cursor.fetch().reverse()
+      Session.set "rows", rows
+      @log "subscription:callback:rows", rows
 
   rows: -> Session.get "rows"
 

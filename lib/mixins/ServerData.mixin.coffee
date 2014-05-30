@@ -59,22 +59,16 @@ ComponentMixins.ServerData =
       # ##### prepareCollection()
       prepareCollection: ->
         if @subscription
-          @data.countCollection = "component_count"
-          @addGetterSetter "data", "countCollection"
+          @countCollectionName = "component_count"
           if Meteor.isClient
-            Component.collections[ @countCollection() ] ?= new Meteor.Collection @countCollection()
-            collection = Component.getCollection @id()
-            if collection instanceof Meteor.Collection
-              @data.collection = collection
-              @log "collection:exists", collection
-            else
-              @data.collection = new Meteor.Collection @id()
-              Component.collections[ @id() ] = @data.collection
-              @log "collection:created", @data.collection
-            @addGetterSetter "data", "collection"
+            Component.collections[ @countCollectionName ] ?= new Meteor.Collection @countCollectionName
+            Component.collections[ @id() ] ?= new Meteor.Collection @id()
+            @collection = Component.collections[ @id() ]
+            @log "collection", @collection
           if Meteor.isServer
             throw new Error "Collection property is not defined" unless @data.collection
-            @addGetterSetter "data", "collection"
+            @collection = @data.collection
+            delete @data.collection
 
     if Meteor.isServer
       @include
@@ -133,12 +127,12 @@ ComponentMixins.ServerData =
           if publication.options.limit and component.publishCount()
             # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
             # breaking when the last page no longer contains any data, or is no longer the last page.
-            lastPage = component.collection().find( publication.filter ).count() - publication.options.limit
+            lastPage = component.collection.find( publication.filter ).count() - publication.options.limit
             if lastPage > 0
               countPublication = _.clone publication
               countPublication.initialized = false
               countPublication.options.skip = lastPage
-              countHandle = component.collection().find( countPublication.filter, countPublication.options ).observe
+              countHandle = component.collection.find( countPublication.filter, countPublication.options ).observe
                 addedAt: -> component.updateCount countPublication
                 changedAt: -> component.updateCount countPublication
                 removedAt: -> component.updateCount countPublication
@@ -151,17 +145,17 @@ ComponentMixins.ServerData =
           component = @
           # `initialized` is the initialization state of the subscriptions observe handle. Counts are only published after the observes are initialized.
           if publication.initialized and component.publishCount()
-            total = component.collection().find( publication.query ).count()
+            total = component.collection.find( publication.query ).count()
             component.log "#{ component.subscription() }:count:total", total
-            filtered = component.collection().find( publication.filter ).count()
+            filtered = component.collection.find( publication.filter ).count()
             component.log "#{ component.subscription() }:count:filtered", filtered
             # `added` is a flag that is set to true on the initial insert into the DaTableCount collection from this subscription.
             if added
-              publication.context.added( component.countCollection(), publication.collectionName, { count: total } )
-              publication.context.added( component.countCollection(), "#{ publication.collectionName }_filtered", { count: filtered } )
+              publication.context.added( component.countCollectionName, publication.collectionName, { count: total } )
+              publication.context.added( component.countCollectionName, "#{ publication.collectionName }_filtered", { count: filtered } )
             else
-              publication.context.changed( component.countCollection(), publication.collectionName, { count: total } )
-              publication.context.changed( component.countCollection(), "#{ publication.collectionName }_filtered", { count: filtered } )
+              publication.context.changed( component.countCollectionName, publication.collectionName, { count: total } )
+              publication.context.changed( component.countCollectionName, "#{ publication.collectionName }_filtered", { count: filtered } )
 
         # ###### createObserver( Object )
         # The component observes just the filtered and paginated subset of the Collection. This is for performance reasons as
@@ -169,14 +163,14 @@ ComponentMixins.ServerData =
         # passed the the observer.
         createObserver: ( publication ) ->
           component = @
-          return component.collection().find( publication.filter, publication.options ).observe
+          return component.collection.find( publication.filter, publication.options ).observe
 
             # ###### addedAt( Object, Number, Number )
             # Updates the count and sends the new doc to the client.
             addedAt: ( doc, index, before ) ->
               component.updateCount publication
               publication.context.added publication.collectionName, doc._id, doc
-              publication.context.added component.collection()._name, doc._id, doc
+              publication.context.added component.collection._name, doc._id, doc
               component.log "#{ component.subscription() }:added", doc._id
 
             # ###### changedAt( Object, Object, Number )
@@ -184,7 +178,7 @@ ComponentMixins.ServerData =
             changedAt: ( newDoc, oldDoc, index ) ->
               component.updateCount publication
               publication.context.changed publication.collectionName, newDoc._id, newDoc
-              publication.context.changed component.collection()._name, newDoc._id, newDoc
+              publication.context.changed component.collection._name, newDoc._id, newDoc
               component.log "#{ component.subscription() }:changed", newDoc._id
 
             # ###### removedAt( Object, Number )
@@ -192,7 +186,7 @@ ComponentMixins.ServerData =
             removedAt: ( doc, index ) ->
               component.updateCount publication
               publication.context.removed publication.collectionName, doc._id
-              publication.context.removed component.collection()._name, doc._id
+              publication.context.removed component.collection._name, doc._id
               component.log "#{ component.subscription() }:removed", doc._id
 
         # ###### publish()
@@ -259,6 +253,7 @@ ComponentMixins.ServerData =
         resetSubscriptionAutorun: ->
           if @subscriptionAutorun and @subscriptionAutorun.stop
             @subscriptionAutorun.stop()
+            @log "subscription:autorun:stopped", @subscriptionAutorun
 
         # ##### subscribe( Function )
         # Subscribes to the dataset for the current table state and stores the handle for later access.
@@ -278,7 +273,6 @@ ComponentMixins.ServerData =
             Session.set "#{ @id() }-subscriptionReady", @subscriptionHandle.ready()
           else
             Session.set "#{ @id() }-subscriptionReady", false
-          @log 'subscription:handle:ready', Session.get "#{ @id() }-subscriptionReady"
           return Session.get "#{ @id() }-subscriptionReady"
 
         # ##### setSubscriptionAutorun()
@@ -296,15 +290,15 @@ ComponentMixins.ServerData =
                     @query()
                     @filter()
                   ]
-                @cursor = @collection().find query, options
+                @cursor = @collection.find query, options
                 callback @cursor
-            @log "subscriptionAutorun", @subscriptionAutorun
+            @log "subscription:autorun:set", @subscriptionAutorun
           else throw new Error "Subscription callback must the a function."
 
         # ##### collectionCount( String )
         collectionCount: ( suffix = null ) ->
           id = if suffix then "#{ @id() }_#{ suffix }" else @id()
-          total = Component.collections[ @countCollection() ].findOne( id )
+          total = Component.collections[ @countCollectionName ].findOne( id )
           count = if total and total.count then total.count
           return count
 
