@@ -1,12 +1,12 @@
 <template name="ChooseTemplate">
-    {{self.backgroundHelper options.background }}
+    {{backgroundHelper options.background }}
     <svg width="{{options.width}}"
          height="{{options.height}}"
          viewBox="{{options.viewbox}}"
          xmlns="http://www.w3.org/2000/svg"
          version="1.1">
         <desc>{{desc}}</desc>
-        {{#with self.chooseTemplate template }}
+        {{#with chooseTemplate template }}
             {{#with .. }}     {{! original arguments to example component }}
                 {{> .. }}     {{! return value from chooseTemplate( template ) }}
             {{/with}}

@@ -2,36 +2,30 @@ class @ServerDataComponent extends Component
   __name__: "ServerData"
   @extend ComponentMixins.ServerData
 
-  constructor: ( context = {} ) ->
+  initialize: ( context ) ->
     super
     @prepareServerData context
 
   rendered: ->
-    if Meteor.isClient
-      @subscribe @exampleSubscriptionCallback
+    @subscribe @exampleSubscriptionCallback if Meteor.isClient
     super
 
-  exampleSubscriptionCallback: ( cursor ) =>
-    if Meteor.isClient
-      rows = cursor.fetch().reverse()
-      Session.set "rows", rows
-      @log "subscription:callback:rows", rows
-
-  rows: -> Session.get "rows"
+  exampleSubscriptionCallback: -> @setData "rows", @cursor if Meteor.isClient
 
   events:
-    "click button.previous": ( event, template ) -> template.paginate "previous", template.exampleSubscriptionCallback
+    "click button.previous": ( event, t ) -> t.__component__.paginate "previous", t.__component__.exampleSubscriptionCallback
 
-    "click button.next": ( event, template ) -> template.paginate "next", template.exampleSubscriptionCallback
+    "click button.next": ( event, t ) -> t.__component__.paginate "next", t.__component__.exampleSubscriptionCallback
 
-    "click button.first": ( event, template ) -> template.paginate "first", template.exampleSubscriptionCallback
+    "click button.first": ( event, t ) -> t.__component__.paginate "first", t.__component__.exampleSubscriptionCallback
 
-    "click button.last": ( event, template ) -> template.paginate "last", template.exampleSubscriptionCallback
+    "click button.last": ( event, t ) -> t.__component__.paginate "last", t.__component__.exampleSubscriptionCallback
 
+
+new ServerDataComponent Template.ServerData if Meteor.isClient
 
 if Meteor.isClient
-  Template.ServerData.created = -> new ServerDataComponent @
-  Template.ServerData.log = -> console.log @
+  Template.ServerData.tempLog = ( object ) -> console.log "temp", object
 
 if Meteor.isServer
   # Reactive Data Source

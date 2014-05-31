@@ -9,7 +9,8 @@
       </tr>
     </thead>
     <tbody>
-      {{#each self.rows }}
+      {{tempLog this }}
+      {{#each rows }}
         <tr>
           <td>{{_id}}</td>
           <td>{{platform}}</td>
@@ -22,11 +23,7 @@
   <div class="row">
     <div class="col-sm-4">
       <h4 class="pull-right">
-        {{#if self.isSubscriptionReady }}
-          Showing {{ self.pageStart }}-{{ self.pageEnd }} of {{ self.collectionCount "filtered" }} ( filtered from {{ self.collectionCount }} )
-        {{else}}
-          Loading...
-        {{/if}}
+        Showing {{ pageStart }}-{{ pageEnd }} of {{ filteredCount }} ( filtered from {{ totalCount }} )
       </h4>
     </div>
     <div class="col-sm-5"></div>
@@ -34,7 +31,7 @@
       <div>
         <button class="btn btn-success first">First</button>
         <button class="btn btn-success previous">Prev</button>
-        <button class="btn btn-default">{{#if self.isSubscriptionReady }}{{ self.currentPageNumber }}{{else}}...{{/if}}</button>
+        <button class="btn btn-default">{{ currentPageNumber }}</button>
         <button class="btn btn-success next">Next</button>
         <button class="btn btn-success last">Last</button>
       </div>

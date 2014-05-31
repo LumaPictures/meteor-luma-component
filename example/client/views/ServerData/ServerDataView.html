@@ -10,24 +10,22 @@
         </div>
         <div class="col-sm-3">
           <label class="control-label text-left">Page Limit :</label>
-          {{#select2 id="subscription-limit" selected=limit }}
-            <option value="10">10</option>
+          {{! #select2 id="subscription-limit" selected=limit }}
+            <!--<option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
-            <option value="100">100</option>
-          {{/select2}}
+            <option value="100">100</option>-->
+          {{! /select2}}
         </div>
       </div>
       <div class="row">
         {{> ServerData
           subscription="example"
           query=query
-          debug="rendered"
-        }}
-        {{> ServerData
-          subscription="example2"
-          query=query
-          debug="rendered"
+          filter=filter
+          limit=limit
+          sort=sort
+          debug="all"
         }}
       </div>
     {{/panelBody}}
