@@ -1,6 +1,17 @@
+LumaComponent =
+  Collections: {}
+  Client: new Meteor.Collection null if Meteor.isClient
+  Portlet: new Meteor.Collection "portlet"
+  Mixins: {}
+
+LumaComponent.Client.instance = {} if Meteor.isClient
+LumaComponent.Portlet.instance = {}
+
 # Component Base Class
-class Component
-    kind: "Component"
+class LumaComponent.Base
+    kind: "LumaComponent"
+
+    portlet: false
 
     data: {}
 
@@ -14,19 +25,29 @@ class Component
         @applyHelper component, "rendered", @rendered
         @applyHelper component, "destroyed", @destroyed
         @applyHelper component, key, helper for key, helper of @helpers
-      @_id = "#{ @kind }-#{ Meteor.Collection.ObjectID() }" if Meteor.isServer
+      if Meteor.isServer
+        @_id = "#{ @kind }-#{ Meteor.Collection.ObjectID() }"
+        @error "Only portlets can be instantiated on the server." unless @portlet
       @log "id", @_id
-      @log "created", @
+      @collection = @getCollection()
       @create()
+      @log "created", @
 
     applyHelper: ( component, key, helper ) ->
       @error "Helpers can only be applied on the client." if Meteor.isServer
       @error "A helper with key : #{ key } already exists on this component." if component[ key ]
       component[ key ] = _.bind helper, @ unless component[ key ]
 
+    getCollection: ->
+      if Meteor.isClient
+        collection = unless @portlet then LumaComponent.Client else LumaComponent.Portlet
+      if Meteor.isServer
+        collection = if @portlet LumaComponent.Portlet else @error "Only portlets can be instantiated on the server."
+      return collection
+
     create: ->
-      Collections.Components.store[ @_id ] = @
-      Collections.Components.insert
+      @collection.instance[ @_id ] = @
+      @collection.insert
         _id: @_id
         kind: @kind
         data: @data
@@ -35,7 +56,7 @@ class Component
       if key and value
         doc = {}
         doc[ key ] = value
-        Collections.Components.update { _id: @_id }, { $set: doc }
+        @collection.update { _id: @_id }, { $set: doc }
 
     getProperty: ( key = null, object ) ->
       return object unless key
@@ -47,7 +68,7 @@ class Component
       return object
 
     get: ( key = null ) ->
-      instance = Collections.Components.findOne _id: @_id
+      instance = @collection.findOne _id: @_id
       @error "Context #{ @_id } not found in component collection." unless instance
       return @getProperty key, instance
 
@@ -56,20 +77,20 @@ class Component
 
     destroyed: ->
       @log "destroyed:context", @
-      Collections.Components.remove _id: @_id
-      delete Collections.Components.store[ @_id ]
+      @collection.remove _id: @_id
+      delete @collection.instance[ @_id ]
 
     initialize: ( @data ) ->
       @data.selector = @_id
+      @debug = @data.debug if @data.debug
       @set "data", @data
       @log "initialize:context", @
       @log "initialize:data", @data
 
     # ##### log( String, Object )
     log: ( message, object ) ->
-      debug = @get "data.debug"
-      if debug
-        if debug is "all" or message.indexOf( debug ) isnt -1
+      if @debug
+        if @debug is "all" or message.indexOf( @debug ) isnt -1
           console.log "#{ @kind }:#{ if @_id then @_id else "constructor" }:#{ message } ->", object
 
     error: ( message ) ->

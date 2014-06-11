@@ -27,6 +27,11 @@
     </template>
   ```
 ###
+
+###
+  TODO: Not in use due to inability to pass helpers to dynamic template contexts
+###
+
 ComponentMixins.ChooseTemplate =
   extended: ->
     if Meteor.isClient
@@ -34,17 +39,18 @@ ComponentMixins.ChooseTemplate =
         # ##### defaultTemplate()
         defaultTemplate: -> return "#{ @__name__ }Default"
 
-        # ##### chooseTemplate ( String )
-        # Return the template specified in the component parameters
-        chooseTemplate: ( template = null ) ->
-          # Set template to default if no template name is passed in
-          template ?= @defaultTemplate()
-          # If the template is defined return it
-          if Template[ template ]
-            template = Template[ template ]
-            # Otherwise return the default template
-          else if Template[ @defaultTemplate() ]
-            template = Template[ @defaultTemplate() ]
-          else throw new Error "#{ @defaultTemplate() } is not defined."
-          @log "chooseTemplate", template
-          return template
+        helpers:
+          # ##### chooseTemplate ( String )
+          # Return the template specified in the component parameters
+          chooseTemplate: ( template = null ) ->
+            # Set template to default if no template name is passed in
+            template ?= @defaultTemplate()
+            # If the template is defined return it
+            if Template[ template ]
+              template = Template[ template ]
+              # Otherwise return the default template
+            else if Template[ @defaultTemplate() ]
+              template = Template[ @defaultTemplate() ]
+            else throw new Error "#{ @defaultTemplate() } is not defined."
+            @log "chooseTemplate", template
+            return template

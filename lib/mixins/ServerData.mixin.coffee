@@ -21,7 +21,7 @@
   ```
 ###
 
-ComponentMixins.ServerData =
+Component.Mixins.ServerData =
   extended: ->
     @include
       prepareServerData: ( context = {} ) ->
