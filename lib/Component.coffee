@@ -77,6 +77,7 @@ class LumaComponent.Base
       if key and value
         oldValue = Deps.nonreactive =>
           @get key
+        oldValue ?= {}
         doc[ key ] = _.extend oldValue, value
         @collection.update { _id: @_id }, { $set: doc }
 

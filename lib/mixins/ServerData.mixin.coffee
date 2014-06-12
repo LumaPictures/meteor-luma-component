@@ -275,7 +275,7 @@ LumaComponent.Mixins.ServerData =
           if @persisted and @subscription.name
             @stopSubscription()
             portlet = @persist( false )
-            @subscription.handle = Meteor.subscribe @subscription.name, @persist( false ),
+            @subscription.handle = Meteor.subscribe @subscription.name, portlet,
               onReady: @subscriptionOnReady callback
               onError: @error
             @log "subscribe:portlet", portlet
