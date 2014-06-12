@@ -5,8 +5,7 @@
       "luma-component": {
         "path": ".."
       },
-      "luma-ui": {},
-      "jquery-select2": {}
+      "luma-ui": {}
     },
     "packages": {
       "luma-component": {
@@ -16,11 +15,6 @@
         "git": "https://github.com/lumapictures/meteor-luma-ui.git",
         "tag": "v0.1.20",
         "commit": "e36c4634eaaf0cb9b0ed51da4715e75cf4075979"
-      },
-      "jquery-select2": {
-        "git": "https://github.com/LumaPictures/meteor-jquery-select2",
-        "tag": "v0.1.12",
-        "commit": "a33712a67f64559a730a3a6b6e97310b2dd6a6d0"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

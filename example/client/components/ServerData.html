@@ -1,4 +1,5 @@
 <template name="ServerData">
+  {{initialize this}}
   <table class="table table-striped">
     <thead>
       <tr>
@@ -9,7 +10,6 @@
       </tr>
     </thead>
     <tbody>
-      {{tempLog this }}
       {{#each rows }}
         <tr>
           <td>{{_id}}</td>
@@ -23,7 +23,7 @@
   <div class="row">
     <div class="col-sm-4">
       <h4 class="pull-right">
-        Showing {{ pageStart }}-{{ pageEnd }} of {{ filteredCount }} ( filtered from {{ totalCount }} )
+        Showing {{ pageStart }}-{{ pageEnd }} of {{ countFiltered }} ( filtered from {{ countTotal }} )
       </h4>
     </div>
     <div class="col-sm-5"></div>
@@ -31,7 +31,7 @@
       <div>
         <button class="btn btn-success first">First</button>
         <button class="btn btn-success previous">Prev</button>
-        <button class="btn btn-default">{{ currentPageNumber }}</button>
+        <button class="btn btn-default">{{ currentPage }}</button>
         <button class="btn btn-success next">Next</button>
         <button class="btn btn-success last">Last</button>
       </div>

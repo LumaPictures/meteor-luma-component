@@ -3,7 +3,6 @@
     "luma-component": {
       "path": ".."
     },
-    "luma-ui": {},
-    "jquery-select2": {}
+    "luma-ui": {}
   }
 }

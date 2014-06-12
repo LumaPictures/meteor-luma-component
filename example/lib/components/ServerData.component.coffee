@@ -1,31 +1,32 @@
-class @ServerDataComponent extends Component
-  __name__: "ServerData"
-  @extend ComponentMixins.ServerData
+class @ServerDataComponent extends LumaComponent.Base
+  kind: "ServerData"
+  @extend LumaComponent.Mixins.ServerData
 
-  initialize: ( context ) ->
+  helpers:
+    rows: -> @get "cursor"
+
+  constructor: ( context ) ->
+    @initializeServerData context
     super
-    @prepareServerData context
 
-  rendered: ->
+  initialize: ( @data ) ->
     @subscribe @exampleSubscriptionCallback if Meteor.isClient
     super
 
-  exampleSubscriptionCallback: -> @setData "rows", @cursor if Meteor.isClient
+  exampleSubscriptionCallback: -> @log "exampleCallback", @
 
   events:
-    "click button.previous": ( event, t ) -> t.__component__.paginate "previous", t.__component__.exampleSubscriptionCallback
+    "click button.previous": ( event, template ) -> template.paginate "previous", template.exampleSubscriptionCallback
 
-    "click button.next": ( event, t ) -> t.__component__.paginate "next", t.__component__.exampleSubscriptionCallback
+    "click button.next": ( event, template ) -> template.paginate "next", template.exampleSubscriptionCallback
 
-    "click button.first": ( event, t ) -> t.__component__.paginate "first", t.__component__.exampleSubscriptionCallback
+    "click button.first": ( event, template ) -> template.paginate "first", template.exampleSubscriptionCallback
 
-    "click button.last": ( event, t ) -> t.__component__.paginate "last", t.__component__.exampleSubscriptionCallback
+    "click button.last": ( event, template ) -> template.paginate "last", template.exampleSubscriptionCallback
 
-
-new ServerDataComponent Template.ServerData if Meteor.isClient
 
 if Meteor.isClient
-  Template.ServerData.tempLog = ( object ) -> console.log "temp", object
+  Template.ServerData.created = -> new ServerDataComponent @
 
 if Meteor.isServer
   # Reactive Data Source
@@ -34,6 +35,6 @@ if Meteor.isServer
     subscription: "example"
     collection: Rows
     debug: "all"
-    query: ( component ) -> return {}
+    query: ( portlet ) -> return {}
 
   RowsComponent.publish()

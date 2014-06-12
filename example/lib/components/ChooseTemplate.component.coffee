@@ -1,4 +1,4 @@
-@ExampleComponentMixins =
+###@ExampleComponentMixins =
   Events:
     extended: ->
       if Meteor.isClient
@@ -25,4 +25,4 @@ class @ChooseTemplateComponent extends Component
   @extend ExampleComponentMixins.Background
 
 if Meteor.isClient
-  Template.ChooseTemplate.created = -> new ChooseTemplateComponent @
+  Template.ChooseTemplate.created = -> new ChooseTemplateComponent @###

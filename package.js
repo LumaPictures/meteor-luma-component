@@ -10,18 +10,17 @@ Package.on_use(function (api, where) {
 
   /* Component */
   api.export([
-    'ComponentMixins',
-    'Component'
+    'LumaComponent'
     /* ADD Component Exports here */
-  ], [ 'client', 'server' ]);
-
-  api.add_files([
-    'lib/mixins/ServerData.mixin.coffee'
   ], [ 'client', 'server' ]);
 
   api.add_files([
     'lib/Component.coffee'
   ], [ 'client', 'server']);
+
+  api.add_files([
+    'lib/mixins/ServerData.mixin.coffee'
+  ], [ 'client', 'server' ]);
   /* END Component */
 });
 
