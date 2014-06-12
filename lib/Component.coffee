@@ -1,16 +1,15 @@
 LumaComponent =
   Collections: {}
-  Client: new Meteor.Collection null if Meteor.isClient
-  Portlet: new Meteor.Collection "portlet"
+  Components: new Meteor.Collection null if Meteor.isClient
+  Portlets: new Meteor.Collection "portlets"
   Mixins: {}
   Keywords: [ 'extended', 'included' ]
-
-LumaComponent.Client.instance = {} if Meteor.isClient
-LumaComponent.Portlet.instance = {}
 
 # Component Base Class
 class LumaComponent.Base
     kind: "LumaComponent"
+
+    initialized: false
 
     portlet: false
 
@@ -18,11 +17,13 @@ class LumaComponent.Base
 
     helpers: {}
 
-    persistable: [
-      "_id"
-      "kind"
-      "data"
-    ]
+    component: LumaComponent.Components if Meteor.isClient
+
+    persistable:
+      _id: true
+      kind: true
+      data: true
+      initialized: true
 
     constructor: ( context ) ->
       @setID()
@@ -35,80 +36,78 @@ class LumaComponent.Base
       if Meteor.isServer
         @error "Only portlets can be instantiated on the server." unless @portlet
         @data = context
-      @log "id", @_id
-      @collection = @getCollection()
       @persist() if Meteor.isClient
 
     setID: ->
-      @_id ?= "#{ @kind }-#{ new Meteor.Collection.ObjectID() }"
+      unless @_id
+        @_id = "#{ @kind }-#{ new Meteor.Collection.ObjectID() }"
+        @save()
 
     applyHelper: ( component, key, helper ) ->
       @error "Helpers can only be applied on the client." if Meteor.isServer
       @error "A helper with key : #{ key } already exists on this component." if component[ key ]
       component[ key ] = _.bind helper, @ unless component[ key ]
 
-    getCollection: ->
+    save: ( reactive = true ) ->
       if Meteor.isClient
-        collection = unless @portlet then LumaComponent.Client else LumaComponent.Portlet
-      if Meteor.isServer
-        collection = if @portlet then LumaComponent.Portlet else @error "Only portlets can be instantiated on the server."
-      return collection
+        if reactive
+          saved = @component.upsert _id: @_id, @
+        else saved = Deps.nonreactive => @component.upsert _id: @_id, @
+        @log "saved", saved
 
-    persist: ( db = true ) ->
+    persist: ( simulation = false ) ->
       doc = {}
-      for key in @persistable
-        doc[ key ] = @[ key ] if @[ key ]
-      @collection.instance[ @_id ] = @
-      @persisted = @collection.upsert _id: doc._id, doc if db
-      @log "persisted", doc
+      for key, value of @persistable
+        doc[ key ] = @[ key ] if @[ key ] and value
+      @save()
+      persisted = @portlet.upsert _id: doc._id, doc unless simulation
+      @log "persisted", persisted
       return doc
-
-    update: ( _id = null, doc ) ->
-      _id ?= @_id
-      @collection.update _id: _id, doc
-      @log "updated:#{ _id }", doc
-
-    remove: ( _id = null ) ->
-      _id ?= @_id
-      @collection.remove _id: _id
-      @log "removed:#{ _id }"
-
-    set: ( key, value, doc = {} ) ->
-      if key and value
-        oldValue = Deps.nonreactive =>
-          @get key
-        oldValue ?= {}
-        doc[ key ] = _.extend oldValue, value
-        @collection.update { _id: @_id }, { $set: doc }
 
     getProperty: ( key = null, object ) ->
       return object unless key
       return object[ key ] if object[ key ]
       path = key.split "."
       while path.length
-        do ->
-          object = object[ path.shift() ]
+        do -> object = object[ path.shift() ]
       return object
 
-    get: ( key = null ) ->
-      instance = @collection.findOne _id: @_id
-      @error "Context #{ @_id } not found in component collection." unless instance
-      return @getProperty key, instance
+    get: ( key = null, reactive = true ) ->
+      if Meteor.isClient
+        if reactive
+          instance = @component.findOne _id: @_id
+        else instance = Deps.nonreactive => @component.findOne _id: @_id
+        @error "Component instance #{ @_id } not found in component collection." unless instance
+        return @getProperty key, instance
 
-    rendered: ->
-      @log "rendered", @
+    fetch: ( key = null, reactive = true ) ->
+      if @persist
+        if reactive
+          instance = @portlet.findOne _id: @_id
+        else instance = Deps.nonreactive => @portlet.findOne _id: @_id
+        @error "Portlet Instance #{ @_id } not found in portlet collection." unless instance
+        return @getProperty key, instance
 
-    destroyed: ->
-      @log "destroyed", @
-      @remove()
-      delete @collection.instance[ @_id ]
+    destroy: ( persist = true ) ->
+      @component.remove _id: @_id
+      @initialized = false
       delete LumaComponent.Collections[ @_id ] if LumaComponent.Collections[ @_id ]
+      @persist() if persist
+      @log "destroyed", @
+
+    delete: ->
+      deleted = @persist.remove _id: @_id if @persist
+      @log "deleted", deleted
+
+    rendered: -> @log "rendered", @
+
+    destroyed: -> @destroy()
 
     initialize: ( @data ) ->
-      @data.selector = @_id
-      @set "data", @data
+      @data.selector ?= @_id
+      @initialized ?= true
       @log "initialized", @
-      @persist()
+      @save()
 
     # ##### log( String, Object )
     log: ( message, object ) ->

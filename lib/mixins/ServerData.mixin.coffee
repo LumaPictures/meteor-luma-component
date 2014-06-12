@@ -21,18 +21,26 @@
   ```
 ###
 
-LumaComponent.Mixins.ServerData =
+LumaComponent.Mixins.Portlet =
   extended: ->
+
     @include
-      
-      portlet: true
+
+      portlet: LumaComponent.Portlets
+
+      setCollection: ->
+        unless LumaComponent.Collections[ @_id ]
+          LumaComponent.Collections[ @_id ] ?= new Meteor.Collection @_id
+          @log "collection", LumaComponent.Collections[ @_id ]
 
       initializeServerData: ( context = {} ) ->
-        @setSubscription context
-        if @subscription
+        @subscription =
+          name: if Meteor.isClient then context.data.subscription else context.subscription
+          ready: false
+        if @subscription.name
           if Meteor.isClient
             @setID()
-            LumaComponent.Collections[ @_id ] ?= new Meteor.Collection @_id
+            @setCollection()
             @data.limit ?= 10
             @data.skip ?= 0
             @data.sort ?= []
@@ -45,13 +53,8 @@ LumaComponent.Mixins.ServerData =
               end: 0
           @data.query ?= {}
           @data.filter ?= {}
-
-      setSubscription: ( context = {} ) ->
-        @persistable.push "subscription" unless "subscription" in @persistable
-        subscription = if Meteor.isClient then context.data.subscription else context.subscription
-        @subscription =
-          name: subscription
-          ready: false
+          @save()
+        else @error "A subscription must be defined in access server data."
 
     if Meteor.isServer
       @include
@@ -177,9 +180,7 @@ LumaComponent.Mixins.ServerData =
           #   + queries: ( Object ) the client queries on the dataset. Usually includes a base and filtered query.
           #   + options : ( Object ) sort and pagination options supplied by the client's current state.
           pub = @
-          subscription = @subscription.name
-          Meteor.publish subscription, ( portlet ) ->
-            console.log "tits"
+          Meteor.publish @subscription.name, ( portlet ) ->
             context = @
             portlet = pub.initializePortlet portlet, context
 
@@ -188,16 +189,16 @@ LumaComponent.Mixins.ServerData =
             handle = pub.createObserver portlet
             portlet.initialized = true
             pub.updateCount portlet, true
+            context.changed LumaComponent.Portlet._name, portlet._id
             context.ready()
 
             countHandle = pub.createCountHandle portlet
-
-            context.changed LumaComponent.Portlet._name, portlet._id
 
             # When the publication is terminated the observers are stopped to prevent memory leaks.
             context.onStop ->
               handle.stop() if handle and handle.stop
               countHandle.stop() if countHandle and countHandle.stop
+              LumaComponent.Portlet.remove _id: portlet._id unless portlet.persist
 
 
     if Meteor.isClient
@@ -237,8 +238,8 @@ LumaComponent.Mixins.ServerData =
             limit = @get "data.limit"
             skip = @get "data.skip"
             filtered = @get "data.count.filtered"
-            currentPageNumber = ( skip // limit ) + 1
-            lastPageNumber = ( filtered // limit ) + 1
+            currentPageNumber = Math.floor( skip / limit ) + 1
+            lastPageNumber = Math.floor( filtered / limit ) + 1
             if currentPageNumber > 0 and currentPageNumber <= lastPageNumber
               return currentPageNumber
             else @error "The current page #{ currentPageNumber } is outside the pagination range for this data set."
@@ -249,11 +250,12 @@ LumaComponent.Mixins.ServerData =
           #Session.set "#{ @getData "id" }-subscriptionReady", false
           if @subscription.handle and @subscription.handle.stop
             @subscription.handle.stop()
-            @set "subscription.ready", false
+            @subscription.ready = false
+            @save()
 
         subscriptionOnReady: ( callback ) ->
-          if _.isFunction callback
-            @subscription.callback = callback
+          console.log "xxx"
+          @subscription.callback = callback if _.isFunction callback
           self = @
           return ->
             options =
@@ -266,19 +268,19 @@ LumaComponent.Mixins.ServerData =
               ]
             self.cursor = LumaComponent.Collections[ @_id ].find query, options
             self.subscription.callback() if _.isFunction self.subscription.callback
-            @set "subscription.ready", true
+            @subscription.ready = true
+            @save()
 
         # ##### subscribe( Function )
         # Subscribes to the dataset for the current table state and stores the handle for later access.
         subscribe: ( callback = null ) ->
           @error "A subscription must be defined in order to subscribe to data." unless @subscription.name
-          if @persisted and @subscription.name
+          if @subscription.name
             @stopSubscription()
-            portlet = @persist( false )
-            @subscription.handle = Meteor.subscribe @subscription.name, portlet,
+            @subscription.handle = Meteor.subscribe @subscription.name, @_id,
               onReady: @subscriptionOnReady callback
               onError: @error
-            @log "subscribe:portlet", portlet
+            @log "subscription:ready", @subscription.handle.ready()
 
         # ##### nextPage( Function )
         nextPage: ( callback ) ->

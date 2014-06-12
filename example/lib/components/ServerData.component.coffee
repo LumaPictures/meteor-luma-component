@@ -1,6 +1,6 @@
 class @ServerDataComponent extends LumaComponent.Base
   kind: "ServerData"
-  @extend LumaComponent.Mixins.ServerData
+  @extend LumaComponent.Mixins.Portlet
 
   helpers:
     rows: -> @get "cursor"
