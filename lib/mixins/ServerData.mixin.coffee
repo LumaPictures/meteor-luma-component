@@ -65,6 +65,7 @@ LumaComponent.Mixins.Portlet =
               changed: ( _id, fields ) -> 
                 self.update fields, "portlet"
                 self.log "portlet:changed", fields
+          @subscribe @exampleSubscriptionCallback
         if Meteor.isServer
           @sync()
           @setObservers()
@@ -76,30 +77,31 @@ LumaComponent.Mixins.Portlet =
           @portlet = LumaComponent.Portlets
 
       setSubscription: ->
-        @subscription =
-          name: @data.subscription
-          ready: false
+        if Meteor.isServer
+          @subscription = @data.subscription
         if Meteor.isClient
           self = @
-          @subscription.callbacks = ( callback ) ->
-            @error "Callback must be a function." unless _.isFunction callback
-            self.sync()
-            return {
-              onError: self.error 
-              onReady: ->
-                options =
-                  limit: self.get "data.limit"
-                  sort: self.get "data.sort"
-                query =
-                  $and: [
-                    self.get "data.query"
-                    self.get "data.filter"
-                  ]
-                self.cursor = self.collection.find query, options
-                self.subscription.ready = true
-                self.save()
-                callback()
-            }
+          @subscription =
+            name: @data.subscription
+            handle: null
+            callbacks: ( callback ) ->
+              @error "Callback must be a function." unless _.isFunction callback
+              return {
+                onError: self.error 
+                onReady: ->
+                  options =
+                    limit: self.get "data.limit"
+                    sort: self.get "data.sort"
+                  query =
+                    $and: [
+                      self.get "data.query"
+                      self.get "data.filter"
+                    ]
+                  self.cursor = self.collection.find query, options
+                  self.subscription.ready = true
+                  self.save()
+                  callback()
+              }
 
       setPortletDefaults: ->
         if @subscription.name
@@ -114,17 +116,16 @@ LumaComponent.Mixins.Portlet =
           @query = @data.query
           @filter = @data.filter
 
-      persist: ( simultaion = false ) ->
+      persist: ( simulation = false ) ->
         if @portlet and @_id
           @setPortlet()
           doc = {}
           for key, value of @persistable
             doc[ key ] = @[ key ] if _.has( @, key ) and value
-          persisted = @portlet.upsert _id: doc._id, doc unless simultaion
-          @log "persisted", persisted unless simultaion
+          unless simulation
+            persisted = @portlet.upsert _id: doc._id, doc
+          @log "persisted", persisted unless simulation
           @log "persisted:doc", doc
-          if Meteor.isServer
-            @publication.changed @portlet._name, @_id, doc
           return doc
 
       obliterate: ->
@@ -190,7 +191,7 @@ LumaComponent.Mixins.Portlet =
             # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
             # breaking when the last page no longer contains any data, or is no longer the last page.
             @observers.count.options.skip = @collection.find( @filter ).count() - @observers.main.options.limit           
-            if lastPage > 0
+            if @observers.count.options.skip > 0
               self = @
               @observers.count.handle = @collection.find( @filter, @observers.count.options ).observe
                 addedAt: -> self.updateCount()
@@ -201,7 +202,7 @@ LumaComponent.Mixins.Portlet =
         startMainObserver: ( portlet ) ->
           self = @
           component = @_id
-          @observers.main.handle = @collection.find( portlet.server.filter, portlet.server.options ).observe
+          @observers.main.handle = @collection.find( @filter, @options ).observe
             # ###### addedAt( Object, Number, Number )
             # Updates the count and sends the new doc to the client.
             addedAt: ( doc, index, before ) ->
@@ -230,7 +231,7 @@ LumaComponent.Mixins.Portlet =
         publish: ->
           @startMainObserver()
           @updateCount()
-          @publication.ready()
+          @subscription.handle.ready()
           @startCountObserver()
           @persist()
 
@@ -239,7 +240,10 @@ LumaComponent.Mixins.Portlet =
       @include
 
         helpers:
-          subscribed: -> @get "subscription.ready"
+          subscribed: -> 
+            handle = @get "subscription.handle"
+            return false unless handle
+            handle.ready()
 
           countTotal: ->
             @get "data.count.total"

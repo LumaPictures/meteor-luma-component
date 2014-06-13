@@ -1,6 +1,7 @@
 <template name="ServerData">
   {{initialize this}}
   {{filter.userAgent.$regex}}
+  {{#if subscribed}}
   <table class="table table-striped">
     <thead>
       <tr>
@@ -38,4 +39,7 @@
       </div>
     </div>
   </div>
+  {{else}}
+    <h1>Loading...</h1>
+  {{/if}}
 </template>
