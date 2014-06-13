@@ -1,3 +1,4 @@
+# Component Namespace
 LumaComponent =
   Collections: {}
   Kinds: {}
@@ -16,6 +17,8 @@ class LumaComponent.Base
     data: {}
 
     helpers: {}
+
+    observers: {}
 
     component: true
 
@@ -39,6 +42,12 @@ class LumaComponent.Base
         @applyHelper component, key, helper for key, helper of @helpers
         @initialized = @initialized
         @save()
+        self = @
+        @observers.component =
+          handle: self.component.find( _id: self._id ).observeChanges
+            changed: ( _id, fields ) -> 
+              self.update fields, "component"
+              self.log "component:changed", fields
       if Meteor.isServer
         @error "Only portlets can be instantiated on the server." unless @portlet
       @log "created", @
@@ -53,10 +62,6 @@ class LumaComponent.Base
           LumaComponent.Collections[ @_id ] ?= new Meteor.Collection @_id
           @collection = LumaComponent.Collections[ @_id ]
           @log "collection", @collection
-
-    setPortlet: ->
-      if @portlet and _.isBoolean @portlet
-        @portlet = LumaComponent.Portlets
 
     getComponentContext: ( context ) -> return context.__component__ if Meteor.isClient
 
@@ -88,7 +93,7 @@ class LumaComponent.Base
     save: ->
       if Meteor.isClient and @_id
         @setComponent()
-        doc = _.omit @, [ 'collection', 'component', 'portlet' ]
+        doc = _.omit @, [ 'collection', 'component', 'portlet', 'observers' ]
         doc.component = if @component then true else false
         doc.collection = if @collection then true else false
         doc.portlet = if @portlet then true else false
@@ -114,19 +119,10 @@ class LumaComponent.Base
         @error "Component instance #{ @_id } not found in component collection." unless instance
         return @getProperty key, instance
 
-    sync: ( reactive = true ) ->
-      if @portlet and @_id
-        @setPortlet()
-        if reactive and @portlet
-          instance = @portlet.findOne _id: @_id
-        else instance = Deps.nonreactive => @portlet.findOne _id: @_id
-        @error "Portlet Instance #{ @_id } not found in portlet collection." unless instance
-        _.extend @, instance
-        @log "synced", instance
-
     destroy: ->
       if Meteor.isClient and @_id
         @setComponent()
+        @stop()
         @component.remove _id: @_id
         @initialized = false
         delete LumaComponent.Collections[ @_id ] if LumaComponent.Collections[ @_id ]
@@ -137,22 +133,26 @@ class LumaComponent.Base
 
     destroyed: -> @destroy()
 
-    update: ( data ) ->
+    update: ( data, source = "template" ) ->
       Deps.nonreactive =>
         initialized = @initialized
         @setID()
         _.extend @, @get()
-        @setData data, @data
+        if source is "template"
+          @setData data, @data
+        else
+          _.extend @, data
         @setDebug()
         @setSelector()
         @initialized = initialized
-        @save()
-        @persist() if @portlet
+        @save() unless source is "component"
+        if @portlet
+          @persist() unless source is "portlet"
+        @log "updated", @
 
     initialize: ( data ) ->
       @initilized = true
       @update data
-      @log "initialized", @
       return null
 
     # ##### log( String, Object )

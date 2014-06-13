@@ -14,7 +14,7 @@ class LumaComponent.Kinds.ExamplePortlet extends LumaComponent.Base
     super
 
   rendered: -> 
-    #@subscribe @exampleSubscriptionCallback if Meteor.isClient
+    @subscribe @exampleSubscriptionCallback if Meteor.isClient
     super
 
   exampleSubscriptionCallback: -> @log "exampleCallback", @

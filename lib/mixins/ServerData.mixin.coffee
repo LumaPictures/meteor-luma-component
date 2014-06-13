@@ -33,8 +33,6 @@ LumaComponent.Mixins.Portlet =
 
       collection: true if Meteor.isClient
 
-      observers: {} if Meteor.isServer
-
       portletDefaults:
         limit: 10
         skip: 0
@@ -58,17 +56,49 @@ LumaComponent.Mixins.Portlet =
         @setData( @getDataContext context )
         @setSubscription()
         @setPortletDefaults()
+        @setPortlet()
+        if Meteor.isClient
+          self = @
+          @observers.portlet = 
+            handle: self.portlet.find( _id: self._id ).observeChanges
+              changed: ( _id, fields ) -> 
+                self.update fields, "portlet"
+                self.log "portlet:changed", fields
         if Meteor.isServer
           @sync()
           @setObservers()
           @setQuery()
           @setFilter()
 
+      setPortlet: ->
+        if @portlet and _.isBoolean @portlet
+          @portlet = LumaComponent.Portlets
+
       setSubscription: ->
-        @persistable.subscription = true
         @subscription =
           name: @data.subscription
           ready: false
+        if Meteor.isClient
+          self = @
+          @subscription.callbacks = ( callback ) ->
+            @error "Callback must be a function." unless _.isFunction callback
+            self.sync()
+            return {
+              onError: self.error 
+              onReady: ->
+                options =
+                  limit: self.get "data.limit"
+                  sort: self.get "data.sort"
+                query =
+                  $and: [
+                    self.get "data.query"
+                    self.get "data.filter"
+                  ]
+                self.cursor = self.collection.find query, options
+                self.subscription.ready = true
+                self.save()
+                callback()
+            }
 
       setPortletDefaults: ->
         if @subscription.name
@@ -107,6 +137,12 @@ LumaComponent.Mixins.Portlet =
         @error "Portlet Instance #{ @_id } not found in portlet collection." unless instance
         _.extend @, instance
         @log "synced", instance
+
+      stop: ->
+        observer.handle.stop() for observer of @observers
+        if Meteor.isServer
+          @portlet.remove _id: @_id unless @persist
+
 
     if Meteor.isServer
       @include
@@ -194,10 +230,6 @@ LumaComponent.Mixins.Portlet =
               self.log "#{ self.subscription }:removed", doc._id
           @observers.main.initialized = true
 
-        stop: ->
-          observers.handle.stop() for observer of @observers
-          @portlet.remove _id: @_id unless @persist
-
         # ###### publish()
         # A instance method for creating paginated publications.
         publish: ->
@@ -215,23 +247,21 @@ LumaComponent.Mixins.Portlet =
           subscribed: -> @get "subscription.ready"
 
           countTotal: ->
-            return "..." unless @helpers.subscribed()
             @get "data.count.total"
 
           countFiltered: ->
-            return "..." unless @helpers.subscribed()
             @get "data.count.filtered"
 
           pageStart: ->
-            return "..." unless @helpers.subscribed()
             skip = @get "data.skip"
             start = skip + 1
             if start > 0 and start <= @helpers.pageEnd()
               return start
-            else @error "Page start #{ start } is outside the pagination range."
+            else 
+              @log "pageStart", "Page start #{ start } is outside the pagination range."
+              return 0
 
           pageEnd: ->
-            return "..." unless @helpers.subscribed()
             skip = @get "data.skip"
             limit = @get "data.limit"
             end = skip + limit
@@ -241,7 +271,6 @@ LumaComponent.Mixins.Portlet =
             else return filtered
 
           pageCurrent: ->
-            return "..." unless @helpers.subscribed()
             limit = @get "data.limit"
             skip = @get "data.skip"
             filtered = @get "data.count.filtered"
@@ -249,32 +278,9 @@ LumaComponent.Mixins.Portlet =
             lastPageNumber = Math.floor( filtered / limit ) + 1
             if currentPageNumber > 0 and currentPageNumber <= lastPageNumber
               return currentPageNumber
-            else @error "The current page #{ currentPageNumber } is outside the pagination range for this data set."
-
-
-        # ##### stopSubscription()
-        stopSubscription: ->
-          if @subscription.handle and @subscription.handle.stop
-            @subscription.handle.stop()
-          #@subscription.ready = false
-          @save()
-
-        subscriptionOnReady: ( callback ) ->
-          @subscription.callback = callback if _.isFunction callback
-          self = @
-          return ->
-            options =
-              limit: self.get "data.limit"
-              sort: self.get "data.sort"
-            query =
-              $and: [
-                self.get "data.query"
-                self.get "data.filter"
-              ]
-            self.cursor = LumaComponent.Collections[ @_id ].find query, options
-            self.subscription.callback() if _.isFunction self.subscription.callback
-            @subscription.ready = true
-            @save()
+            else 
+              @log "pageCurrent", "The current page #{ currentPageNumber } is outside the pagination range for this data set."
+              return 1
 
         # ##### subscribe( Function )
         # Subscribes to the dataset for the current table state and stores the handle for later access.
@@ -282,53 +288,58 @@ LumaComponent.Mixins.Portlet =
           @error "A subscription must be defined in order to subscribe to data." unless @subscription.name
           if @subscription.name
             @stopSubscription()
-            @subscription.handle = Meteor.subscribe @subscription.name, @_id,
-              onReady: @subscriptionOnReady callback
-              onError: @error
-            @log "subscription:ready", @subscription.handle.ready()
+            @subscription.handle = Meteor.subscribe @subscription.name, @_id, @subscription.callbacks( callback )
+            @log "subscription:ready", @subscription.ready
+            @save()
+
+        stopSubscription: ->
+          if Meteor.isClient
+            if @subscription.handle and @subscription.handle.stop
+              @subscription.handle.stop()
+            @subscription.ready = false
 
         nextPage: ->
-          skip = @get "data.skip"
-          limit = @get "data.limit"
+          skip = @data.skip
+          limit = @data.limit
           nextPage = skip + limit
           unless nextPage >= @helpers.countFiltered()
-            @set "data.skip", nextPage
+            @data.skip = nextPage
             @log "paginate:next", @helpers.pageCurrent()
-            @persist()
+            @save()
 
         previousPage: ->
-          skip = @get "data.skip"
-          limit = @get "data.limit"
+          skip = @data.skip
+          limit = @data.limit
           previousPage = skip - limit
           unless previousPage < 0
-            @set "data.skip", previousPage
+            @data.skip = reviousPage
             @log "paginate:previous", @helpers.pageCurrent()
-            @persist()
+            @save()
 
         firstPage: ->
-          unless @get "skip" is 0
-            @set "skip", 0
+          unless @data.skip is 0
+            @data.skip = 0
             @log "paginate:first", @helpers.pageCurrent()
-            @persist()
+            @save()
 
         lastPage: ->
-          limit = @get "limit"
-          count = @collectionCount "filtered"
+          limit = @data.limit
+          count = @data.count.filtered
           lastPage = count - limit
           unless lastPage is @get "skip"
-            @set "data.skip", lastPage
+            @data.skip = lastPage
             @log "paginate:last", @helpers.pageCurrent()
-            @subscribe callback
+            @save()
 
         goToPage: ( page ) ->
           if _.isNumber page and _.isFunction callback
-            limit = @get "limit"
+            limit = @data.limit
             pageStart = ( page * limit ) - limit
             if pageStart >= @helpers.countFiltered()
-              @set "data.skip", pageStart
+              @data.skip = pageStart
               @log "paginate:page", page
-              @subscribe callback
-            else @error "Page #{ page } is outside the pagination range for this dataset."
+              @save()
+            else @log "goToPage", "Page #{ page } is outside the pagination range for this dataset."
 
         # ##### paginate( String or Number, Function )
         paginate: ( page ) ->
