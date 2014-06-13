@@ -1,16 +1,19 @@
 class @ServerDataComponent extends LumaComponent.Base
   kind: "ServerData"
-  @extend LumaComponent.Mixins.Portlet
 
   helpers:
-    rows: -> @get "cursor"
+    rows: ->
+      @get "cursor"
+
+  @extend LumaComponent.Mixins.Portlet
 
   constructor: ( context ) ->
+    component = @getComponentContext context
     @initializeServerData context
     super
 
-  initialize: ( @data ) ->
-    @subscribe @exampleSubscriptionCallback if Meteor.isClient
+  rendered: -> 
+    #@subscribe @exampleSubscriptionCallback if Meteor.isClient
     super
 
   exampleSubscriptionCallback: -> @log "exampleCallback", @

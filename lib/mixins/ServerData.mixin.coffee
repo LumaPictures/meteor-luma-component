@@ -26,21 +26,19 @@ LumaComponent.Mixins.Portlet =
 
     @include
 
-      portlet: LumaComponent.Portlets
+      portlet: true
 
-      setCollection: ->
-        unless LumaComponent.Collections[ @_id ]
-          LumaComponent.Collections[ @_id ] ?= new Meteor.Collection @_id
-          @log "collection", LumaComponent.Collections[ @_id ]
+      collection: true if Meteor.isClient
 
       initializeServerData: ( context = {} ) ->
+        @persistable.subscription = true
         @subscription =
           name: if Meteor.isClient then context.data.subscription else context.subscription
           ready: false
+        data = @getDataContext context
+        @setData data
         if @subscription.name
           if Meteor.isClient
-            @setID()
-            @setCollection()
             @data.limit ?= 10
             @data.skip ?= 0
             @data.sort ?= []
@@ -53,7 +51,6 @@ LumaComponent.Mixins.Portlet =
               end: 0
           @data.query ?= {}
           @data.filter ?= {}
-          @save()
         else @error "A subscription must be defined in access server data."
 
     if Meteor.isServer
@@ -234,7 +231,7 @@ LumaComponent.Mixins.Portlet =
             else return filtered
 
           pageCurrent: ->
-            return "Loading..." unless @helpers.subscribed()
+            return "..." unless @helpers.subscribed()
             limit = @get "data.limit"
             skip = @get "data.skip"
             filtered = @get "data.count.filtered"
@@ -247,14 +244,12 @@ LumaComponent.Mixins.Portlet =
 
         # ##### stopSubscription()
         stopSubscription: ->
-          #Session.set "#{ @getData "id" }-subscriptionReady", false
           if @subscription.handle and @subscription.handle.stop
             @subscription.handle.stop()
-            @subscription.ready = false
-            @save()
+          #@subscription.ready = false
+          @save()
 
         subscriptionOnReady: ( callback ) ->
-          console.log "xxx"
           @subscription.callback = callback if _.isFunction callback
           self = @
           return ->
