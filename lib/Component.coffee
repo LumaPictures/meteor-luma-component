@@ -119,36 +119,36 @@ class LumaComponent.Base
         @error "Component instance #{ @_id } not found in component collection." unless instance
         return @getProperty key, instance
 
-    destroy: ->
+    stop: -> observer.handle.stop() for key, observer of @observers
+
+    rendered: -> @log "rendered", @
+
+    destroyed: -> 
       if Meteor.isClient and @_id
         @setComponent()
         @stop()
         @component.remove _id: @_id
         @initialized = false
         delete LumaComponent.Collections[ @_id ] if LumaComponent.Collections[ @_id ]
-        @persist() if persist and @portlet
+        @persist() if @portlet
         @log "destroyed", @
 
-    rendered: -> @log "rendered", @
-
-    destroyed: -> @destroy()
-
     update: ( data, source = "template" ) ->
-      Deps.nonreactive =>
-        initialized = @initialized
-        @setID()
-        _.extend @, @get()
-        if source is "template"
-          @setData data, @data
-        else
-          _.extend @, data
-        @setDebug()
-        @setSelector()
-        @initialized = initialized
-        @save() unless source is "component"
-        if @portlet
-          @persist() unless source is "portlet"
-        @log "updated", @
+      initialized = @initialized
+      @setID()
+      current = Deps.nonreactive => @get()
+      _.extend @, current
+      if source is "template"
+        @setData data, @data
+      else
+        _.extend @, data
+      @setDebug()
+      @setSelector()
+      @initialized = initialized
+      @save() unless source is "component"
+      if @portlet
+        @persist() unless source is "portlet"
+      @log "updated", @
 
     initialize: ( data ) ->
       @initilized = true

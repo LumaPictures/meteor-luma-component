@@ -51,9 +51,10 @@ LumaComponent.Mixins.Portlet =
         debug: true
 
       initializePortlet: ( context = {} ) ->
-        Match.test context, Object
+        @setID()
         @kind = "Portlet" if @kind is "Component"
         @setData( @getDataContext context )
+        @setDebug()
         @setSubscription()
         @setPortletDefaults()
         @setPortlet()
@@ -137,12 +138,6 @@ LumaComponent.Mixins.Portlet =
         @error "Portlet Instance #{ @_id } not found in portlet collection." unless instance
         _.extend @, instance
         @log "synced", instance
-
-      stop: ->
-        observer.handle.stop() for observer of @observers
-        if Meteor.isServer
-          @portlet.remove _id: @_id unless @persist
-
 
     if Meteor.isServer
       @include

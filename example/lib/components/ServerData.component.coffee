@@ -9,7 +9,6 @@ class LumaComponent.Kinds.ExamplePortlet extends LumaComponent.Base
   @extend LumaComponent.Mixins.Portlet
 
   constructor: ( context ) ->
-    component = @getComponentContext context
     @initializePortlet context
     super
 
