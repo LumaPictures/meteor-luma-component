@@ -1,5 +1,6 @@
 LumaComponent =
   Collections: {}
+  Kinds: {}
   Components: new Meteor.Collection null if Meteor.isClient
   Portlets: new Meteor.Collection "portlets"
   Mixins: {}
@@ -7,7 +8,8 @@ LumaComponent =
 
 # Component Base Class
 class LumaComponent.Base
-    kind: "LumaComponent"
+
+    kind: "Component"
 
     initialized: false if Meteor.isClient
 
@@ -16,19 +18,10 @@ class LumaComponent.Base
     helpers: {}
 
     component: true
-    
-    portlet: false
 
     collection: false
 
     debug: false
-
-    persistable:
-      _id: true
-      kind: true
-      data: true
-      initialized: true
-      debug: true
 
     constructor: ( context ) ->
       @setID()
@@ -103,17 +96,6 @@ class LumaComponent.Base
         @log "saved", saved
         @log "saved:doc", doc
 
-    persist: ( simultaion = false ) ->
-      if @portlet and @_id
-        @setPortlet()
-        doc = {}
-        for key, value of @persistable
-          doc[ key ] = @[ key ] if _.has( @, key ) and value
-        persisted = @portlet.upsert _id: doc._id, doc unless simultaion
-        @log "persisted", persisted unless simultaion
-        @log "persisted:doc", doc
-        return doc
-
     getProperty: ( key = null, object ) ->
       if _.isObject object
         return object unless key
@@ -142,20 +124,14 @@ class LumaComponent.Base
         _.extend @, instance
         @log "synced", instance
 
-    destroy: ( persist = true ) ->
+    destroy: ->
       if Meteor.isClient and @_id
         @setComponent()
         @component.remove _id: @_id
         @initialized = false
         delete LumaComponent.Collections[ @_id ] if LumaComponent.Collections[ @_id ]
-        @persist() if persist
+        @persist() if persist and @portlet
         @log "destroyed", @
-
-    obliterate: ->
-      if @portlet and @_id
-        @setPortlet()
-        obliterated = @portlet.remove _id: @_id if @portlet
-        @log "obliterated", obliterated
 
     rendered: -> @log "rendered", @
 
@@ -171,7 +147,7 @@ class LumaComponent.Base
         @setSelector()
         @initialized = initialized
         @save()
-        @persist()
+        @persist() if @portlet
 
     initialize: ( data ) ->
       @initilized = true

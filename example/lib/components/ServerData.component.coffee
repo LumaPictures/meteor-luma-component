@@ -1,5 +1,6 @@
-class @ServerDataComponent extends LumaComponent.Base
-  kind: "ServerData"
+class LumaComponent.Kinds.ExamplePortlet extends LumaComponent.Base
+
+  kind: "ExamplePortlet"
 
   helpers:
     rows: ->
@@ -9,7 +10,7 @@ class @ServerDataComponent extends LumaComponent.Base
 
   constructor: ( context ) ->
     component = @getComponentContext context
-    @initializeServerData context
+    @initializePortlet context
     super
 
   rendered: -> 
@@ -29,15 +30,20 @@ class @ServerDataComponent extends LumaComponent.Base
 
 
 if Meteor.isClient
-  Template.ServerData.created = -> new ServerDataComponent @
+  Template.ServerData.created = -> new LumaComponent.Kinds.ExamplePortlet @
 
 if Meteor.isServer
-  # Reactive Data Source
-  # ====================
-  RowsComponent = new ServerDataComponent
-    subscription: "example"
-    collection: Rows
-    debug: "all"
-    query: ( portlet ) -> return {}
 
-  RowsComponent.publish()
+  Meteor.publish "example", ( _id ) ->
+
+    portlet = new LumaComponent.Kinds.ExamplePortlet
+      subscription: "example"
+      collection: Rows
+      debug: "all"
+      query: ( portlet ) -> return {}
+      _id: _id
+    
+    portlet.publish()
+    
+    @onStop ->
+      portlet.stop()

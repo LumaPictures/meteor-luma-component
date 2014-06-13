@@ -34,5 +34,5 @@ unless process.env.METEOR_SETTINGS
 
   # Push a subset of settings to the client.
   __meteor_runtime_config__.PUBLIC_SETTINGS = Meteor.settings.public  if Meteor.settings and Meteor.settings.public
-  console.log "Using [ #{ environment } ] Meteor.settings"
-  console.log Meteor.settings
+  ###console.log "Using [ #{ environment } ] Meteor.settings"
+  console.log Meteor.settings###

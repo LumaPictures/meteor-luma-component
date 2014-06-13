@@ -22,180 +22,190 @@
 ###
 
 LumaComponent.Mixins.Portlet =
+
   extended: ->
 
     @include
 
       portlet: true
 
+      persist: false
+
       collection: true if Meteor.isClient
 
-      initializeServerData: ( context = {} ) ->
+      observers: {} if Meteor.isServer
+
+      portletDefaults:
+        limit: 10
+        skip: 0
+        sort: []
+        count:
+          total: 0
+          filtered: 0
+        query: {}
+        filter: {}
+
+      persistable:
+        _id: true
+        kind: true
+        data: true
+        initialized: true
+        debug: true
+
+      initializePortlet: ( context = {} ) ->
+        Match.test context, Object
+        @kind = "Portlet" if @kind is "Component"
+        @setData( @getDataContext context )
+        @setSubscription()
+        @setPortletDefaults()
+        if Meteor.isServer
+          @sync()
+          @setObservers()
+          @setQuery()
+          @setFilter()
+
+      setSubscription: ->
         @persistable.subscription = true
         @subscription =
-          name: if Meteor.isClient then context.data.subscription else context.subscription
+          name: @data.subscription
           ready: false
-        data = @getDataContext context
-        @setData data
+
+      setPortletDefaults: ->
         if @subscription.name
-          if Meteor.isClient
-            @data.limit ?= 10
-            @data.skip ?= 0
-            @data.sort ?= []
-            @data.count ?=
-              total: 0
-              filtered: 0
-            @data.page ?=
-              current: 0
-              start: 0
-              end: 0
-          @data.query ?= {}
-          @data.filter ?= {}
-        else @error "A subscription must be defined in access server data."
+          _.defaults @data, @portletDefaults
+        else @error "All portlets must have a subscription defined."
+        if Meteor.isServer
+          @error "All portlet data contexts must have an _id." unless @data._id
+          @_id = @data._id
+          @error "All portlet data contexts must have a collection." unless @data.collection
+          @collection = @data.collection
+          @debug = @data.debug
+          @query = @data.query
+          @filter = @data.filter
+
+      persist: ( simultaion = false ) ->
+        if @portlet and @_id
+          @setPortlet()
+          doc = {}
+          for key, value of @persistable
+            doc[ key ] = @[ key ] if _.has( @, key ) and value
+          persisted = @portlet.upsert _id: doc._id, doc unless simultaion
+          @log "persisted", persisted unless simultaion
+          @log "persisted:doc", doc
+          if Meteor.isServer
+            @publication.changed @portlet._name, @_id, doc
+          return doc
+
+      obliterate: ->
+        if @portlet and @_id
+          @setPortlet()
+          obliterated = @portlet.remove _id: @_id if @portlet
+          @log "obliterated", obliterated
+
+      sync: ->
+        instance = @portlet.findOne _id: @_id
+        @error "Portlet Instance #{ @_id } not found in portlet collection." unless instance
+        _.extend @, instance
+        @log "synced", instance
 
     if Meteor.isServer
       @include
-
-        # ###### initializePortlet( Object, Context )
-        initializePortlet: ( portlet, context ) ->
-          Match.test portlet, Object
-          Match.test context, Object
-
-          portlet.server = 
-            context: context
+        setObservers: ->
+          @observers.main =
             initialized: false
             options:
-              limit: portlet.limit
-              skip: portlet.skip
-              sort: portlet.sort
+              limit: @data.limit
+              skip: @data.skip
+              sort: @data.sort
+            handle: null
+          @observers.count =
+            initialized: false
+            options: @observers.main.options
+            handle: null
+          @log "#{ @subscription.name }:observers", @observers
 
-          @log "#{ @subscription.name }:portlet:raw", _.omit portlet, "server"
-          
-          if _.isFunction @data.query
-            queryMethod = _.bind @data.query, context
+        setQuery: ->
+          if _.isFunction @query
+            queryMethod = _.bind @query, @
             query = queryMethod @
-          else query = @data.query
-
-          portlet.server.query =
+          else query = @query
+          @query =
             $and: [
               query
-              portlet.data.query
+              @data.query
             ]
+          @log "#{ @subscription.name }:query", query
 
-          portlet.server.filter =
+        setFilter: ->
+          @filter =
             $and: [
-              portlet.server.query
-              portlet.data.filter
+              @query
+              @data.filter
             ] 
-
-          @log "#{ @subscription.name }:portlet:server", _.omit portlet.server, "context"
-          return portlet
-
-        # ###### createCountHandle( Object )
-        createCountHandle: ( portlet ) ->
-          publication = @
-          collection = publication.data.collection
-          if portlet.server.options.limit
-            # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
-            # breaking when the last page no longer contains any data, or is no longer the last page.
-            lastPage = collection.find( portlet.server.filter ).count() - portlet.server.options.limit
-            
-            if lastPage > 0
-              countPublication = _.clone portlet
-              countPublication.server.initialized = false
-              filter = countPublication.server.filter
-              options = countPublication.server.options
-              options.skip = lastPage
-              countHandle = collection.find( filter, options ).observe
-                addedAt: -> publication.updateCount countPublication
-                changedAt: -> publication.updateCount countPublication
-                removedAt: -> publication.updateCount countPublication
-              countPublication.initialized = true
-              return countHandle
+          @log "#{ @subscription.name }:filter", @filter
 
         # ###### updateCount( Object )
         # Update the count values of the client component_count Collection to reflect the current filter state.
-        updateCount: ( portlet ) ->
+        updateCount: ->
           # `initialized` is the initialization state of the subscriptions observe handle. Counts are only published after the observes are initialized.
-          if portlet.initialized
-            collection = @data.collection
-            total = collection.find( portlet.server.query ).count()
-            @log "#{ @subscription.name }:#{ portlet._id }:count:total", total
+          if @observers.main.initialized and @observers.count.initialized
+            @data.count.total = @collection.find( @query ).count()
+            @data.count.filtered = @collection.find( @filter ).count()
+            @persist()
+            @log "#{ @subscription.name }:#{ portlet._id }:count", @data.count
 
-            filtered = collection.find( portlet.server.filter ).count()
-            @log "#{ @subscription.name }:#{ portlet._id }:count:filtered", filtered
+        startCountObserver: ->
+          if @observers.main.options.limit
+            # This is an attempt to monitor the last page in the dataset for changes, this is due to datatable on the client
+            # breaking when the last page no longer contains any data, or is no longer the last page.
+            @observers.count.options.skip = @collection.find( @filter ).count() - @observers.main.options.limit           
+            if lastPage > 0
+              self = @
+              @observers.count.handle = @collection.find( @filter, @observers.count.options ).observe
+                addedAt: -> self.updateCount()
+                changedAt: -> self.updateCount()
+                removedAt: -> self.updateCount()
+              @observers.count.initialized = true
 
-            @update portlet._id, count:
-              total: total
-              filtered: filtered
-
-
-
-        # ###### createObserver( Object )
-        # The component observes just the filtered and paginated subset of the Collection. This is for performance reasons as
-        # observing large datasets entirely is unrealistic. The observe callbacks use `At` due to the sort and limit options
-        # passed the the observer.
-        createObserver: ( portlet ) ->
-          pub = @
-          collection = @data.collection
-          serverCollection = collection._name
-          portletCollection = portlet._id
-          subscription = pub.subscription.name
-          return collection.find( portlet.server.filter, portlet.server.options ).observe
-
+        startMainObserver: ( portlet ) ->
+          self = @
+          component = @_id
+          @observers.main.handle = @collection.find( portlet.server.filter, portlet.server.options ).observe
             # ###### addedAt( Object, Number, Number )
             # Updates the count and sends the new doc to the client.
             addedAt: ( doc, index, before ) ->
-              pub.updateCount publication
-              portlet.server.context.added portletCollection, doc._id, doc
-              portlet.server.context.added serverCollection, doc._id, doc
-              pub.log "#{ subscription }:added", doc._id
-
+              self.updateCount()
+              self.publication.added component, doc._id, doc
+              self.publication.added self.collection, doc._id, doc
+              self.log "#{ self.subscription.name }:added", doc._id
             # ###### changedAt( Object, Object, Number )
             # Updates the count and sends the changed properties to the client.
             changedAt: ( newDoc, oldDoc, index ) ->
-              pub.updateCount portlet
-              portlet.server.context.changed portletCollection, newDoc._id, newDoc
-              portlet.server.context.changed serverCollection, newDoc._id, newDoc
-              pub.log "#{ subscription }:changed", newDoc._id
-
+              self.updateCount()
+              self.publication.changed component, newDoc._id, newDoc
+              self.publication.changed self.collection, newDoc._id, newDoc
+              self.log "#{ self.subscription }:changed", newDoc._id
             # ###### removedAt( Object, Number )
             # Updates the count and removes the document from the client.
             removedAt: ( doc, index ) ->
-              pub.updateCount portlet
-              portlet.server.context.removed portletCollection, doc._id
-              portlet.server.context.removed serverCollection, doc._id
-              pub.log "#{ subscription }:removed", doc._id
+              self.updateCount()
+              self.removed component, doc._id
+              self.removed self.collection, doc._id
+              self.log "#{ self.subscription }:removed", doc._id
+          @observers.main.initialized = true
+
+        stop: ->
+          observers.handle.stop() for observer of @observers
+          @portlet.remove _id: @_id unless @persist
 
         # ###### publish()
         # A instance method for creating paginated publications.
         publish: ->
-          # ###### Meteor.publish
-          # The publication this method provides is a paginated and filtered subset of the baseQuery defined during component instantiation on the server.
-          # ###### Parameters
-          #   + portlet_id: ( String ) The client collection these documents are being added to.
-          #   + queries: ( Object ) the client queries on the dataset. Usually includes a base and filtered query.
-          #   + options : ( Object ) sort and pagination options supplied by the client's current state.
-          pub = @
-          Meteor.publish @subscription.name, ( portlet ) ->
-            context = @
-            portlet = pub.initializePortlet portlet, context
-
-            # After the observer is initialized the `initialized` flag is set to true, the initial count is published,
-            # and the publication is marked as `ready()`
-            handle = pub.createObserver portlet
-            portlet.initialized = true
-            pub.updateCount portlet, true
-            context.changed LumaComponent.Portlet._name, portlet._id
-            context.ready()
-
-            countHandle = pub.createCountHandle portlet
-
-            # When the publication is terminated the observers are stopped to prevent memory leaks.
-            context.onStop ->
-              handle.stop() if handle and handle.stop
-              countHandle.stop() if countHandle and countHandle.stop
-              LumaComponent.Portlet.remove _id: portlet._id unless portlet.persist
+          @startMainObserver()
+          @updateCount()
+          @publication.ready()
+          @startCountObserver()
+          @persist()
 
 
     if Meteor.isClient
@@ -277,35 +287,31 @@ LumaComponent.Mixins.Portlet =
               onError: @error
             @log "subscription:ready", @subscription.handle.ready()
 
-        # ##### nextPage( Function )
-        nextPage: ( callback ) ->
+        nextPage: ->
           skip = @get "data.skip"
           limit = @get "data.limit"
           nextPage = skip + limit
           unless nextPage >= @helpers.countFiltered()
             @set "data.skip", nextPage
             @log "paginate:next", @helpers.pageCurrent()
-            @subscribe callback
+            @persist()
 
-        # ##### previousPage( Function )
-        previousPage: ( callback ) ->
+        previousPage: ->
           skip = @get "data.skip"
           limit = @get "data.limit"
           previousPage = skip - limit
           unless previousPage < 0
             @set "data.skip", previousPage
             @log "paginate:previous", @helpers.pageCurrent()
-            @subscribe callback
+            @persist()
 
-        # ##### firstPage( Function )
-        firstPage: ( callback ) ->
+        firstPage: ->
           unless @get "skip" is 0
             @set "skip", 0
             @log "paginate:first", @helpers.pageCurrent()
-            @subscribe callback
+            @persist()
 
-        # ##### lastPage( Function )
-        lastPage: ( callback ) ->
+        lastPage: ->
           limit = @get "limit"
           count = @collectionCount "filtered"
           lastPage = count - limit
@@ -314,8 +320,7 @@ LumaComponent.Mixins.Portlet =
             @log "paginate:last", @helpers.pageCurrent()
             @subscribe callback
 
-        # ##### gotToPage( Number, Function )
-        goToPage: ( page, callback ) ->
+        goToPage: ( page ) ->
           if _.isNumber page and _.isFunction callback
             limit = @get "limit"
             pageStart = ( page * limit ) - limit
@@ -326,15 +331,15 @@ LumaComponent.Mixins.Portlet =
             else @error "Page #{ page } is outside the pagination range for this dataset."
 
         # ##### paginate( String or Number, Function )
-        paginate: ( page, callback ) ->
+        paginate: ( page ) ->
           if _.isFunction callback
             if _.isString page
               switch page
-                when "next" then @nextPage callback
-                when "previous" then @previousPage callback
-                when "first" then @firstPage callback
-                when "last" then @lastPage callback
+                when "next" then @nextPage()
+                when "previous" then @previousPage()
+                when "first" then @firstPage()
+                when "last" then @lastPage()
                 else @error "The paginate method currently only supports 'next' and 'previous' as pagination directions."
             else if _.isNumber page
-              @goToPage page, callback
+              @goToPage page
             else @error "The page argument must be a number or string."
