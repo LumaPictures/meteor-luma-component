@@ -53,7 +53,15 @@ LumaComponent.Mixins.Portlet =
       initializePortlet: ( context = {} ) ->
         @setID()
         @kind = "Portlet" if @kind is "Component"
-        @setData( @getDataContext context )
+        data = @getDataContext context
+        if Meteor.isServer
+          @collection = data.collection
+          @query = data.query
+          @subscription = data.subscription
+          delete data.subscription
+          delete data.collection
+          delete data.query
+        @setData data
         @setDebug()
         @setSubscription()
         @setPortletDefaults()
@@ -77,8 +85,6 @@ LumaComponent.Mixins.Portlet =
           @portlet = LumaComponent.Portlets
 
       setSubscription: ->
-        if Meteor.isServer
-          @subscription = @data.subscription
         if Meteor.isClient
           self = @
           @subscription =
@@ -110,10 +116,8 @@ LumaComponent.Mixins.Portlet =
         if Meteor.isServer
           @error "All portlet data contexts must have an _id." unless @data._id
           @_id = @data._id
-          @error "All portlet data contexts must have a collection." unless @data.collection
-          @collection = @data.collection
+          @error "All portlet data contexts must have a collection." unless @collection
           @debug = @data.debug
-          @query = @data.query
           @filter = @data.filter
 
       persist: ( simulation = false ) ->

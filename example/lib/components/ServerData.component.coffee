@@ -29,18 +29,17 @@ if Meteor.isServer
 
   Meteor.publish "example", ( _id ) ->
     subscription = @
-
     handle = LumaComponent.Portlets.find( _id: _id ).observeChanges
       added: ( _id, doc ) ->
         console.log "added:#{ _id }", doc
         portlet = new LumaComponent.Kinds.ExamplePortlet
+          _id: _id
           subscription: 
             name: doc.data.subscription
             handle: subscription
           collection: Rows
           debug: doc.data.debug
           query: ( portlet ) -> return {}
-          _id: _id
         portlet.publish()
         subscription.onStop ->
           portlet.stop()
@@ -48,9 +47,11 @@ if Meteor.isServer
 
       changed: ( _id, fields ) ->
         console.log "changed:#{ _id }", fields
+        subscription.changed LumaComponent.Portlets._name, _id, fields
 
       removed: ( _id ) ->
         console.log "removed", _id
+        subscription.removed LumaComponent.Portlets._name, _id, fields
     
     subscription.onStop ->
       console.log "handle:stop" 
